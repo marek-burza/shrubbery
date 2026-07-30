@@ -10,6 +10,5 @@ wheels/
 .env
 artifacts
 outputs
-wandb
 workspace
 .claude/settings.local.json

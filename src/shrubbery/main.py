@@ -10,7 +10,6 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 import torch
-import wandb
 from sklearn.model_selection import GridSearchCV
 
 from shrubbery.constants import (
@@ -33,59 +32,6 @@ from shrubbery.tournament import (
     update_tournament_submissions,
 )
 from shrubbery.utilities import load_model, store_model
-from shrubbery.validation import (
-    cross_validation_to_parallel_coordinates,
-    get_best_parameters,
-    reformat_cross_validation_result,
-)
-from shrubbery.workspace import get_workspace_path
-
-
-# TODO: Use GridSearchCV with verbose set to 10 instead
-class WandbGridSearchCV(GridSearchCV):
-    def __init__(
-        self,
-        model_name: str,
-        estimator: Any,
-        param_grid: dict,
-        scoring: Callable,
-        n_jobs: int | None = None,
-        refit: bool = True,
-        cv: Any = None,
-        verbose: int = 0,
-        pre_dispatch: int | str = '2*n_jobs',
-        error_score: float = np.nan,
-        return_train_score: bool = False,
-    ) -> None:
-        self.model_name = model_name
-        self.estimator = estimator
-        self.param_grid = param_grid
-        self.scoring = scoring
-        self.n_jobs = n_jobs
-        self.refit = refit
-        self.cv = cv
-        self.verbose = verbose
-        self.pre_dispatch = pre_dispatch
-        self.error_score = error_score
-        self.return_train_score = return_train_score
-
-    def fit(
-        self, x: np.ndarray, y: np.ndarray, **kwargs: dict[str, Any]
-    ) -> 'WandbGridSearchCV':
-        logger.info('Entering time series cross validation loop')
-        logger.info(f'Shape of training data - x:{x.shape} y:{y.shape}')
-        super().fit(x, y)
-        cv_results = self.cv_results_
-        cross_validation_to_parallel_coordinates(cv_results, self.model_name)
-        cross_validation_result = reformat_cross_validation_result(
-            cv_results, self.model_name
-        )
-        for parameter in self.param_grid.keys():
-            get_best_parameters(cross_validation_result, parameter, top_k=1)
-        return self.best_estimator_
-
-    def predict(self, x: np.ndarray) -> np.ndarray:
-        return self.best_estimator_.predict(x)
 
 
 class NumeraiRunner:
@@ -119,20 +65,10 @@ class NumeraiRunner:
             np.random.seed(RANDOM_SEED)
         silence_false_positive_warnings()
         update_tournament_submissions(self.numerai_model_id)
-        wandb.init(dir='/tmp/wandb')
-        _save_config_file_to_wandb(config_content, config_name)
         tournament_round = napi.get_current_round()
         logger.info(f'Tournament round: {tournament_round}')
         logger.info(f'Model Name: {self.numerai_model_id}')
         logger.info(f'Notes: {self.notes}')
-        if wandb.run is not None:
-            wandb.run.summary.update(
-                {
-                    'numerai_model_id': self.numerai_model_id,
-                    'tournament_round': tournament_round,
-                }
-            )
-            wandb.run.notes = self.notes
         download_numerai_files()
         feature_cols = get_feature_set(self.feature_set_name)
         targets = get_training_targets()
@@ -200,18 +136,6 @@ class NumeraiRunner:
             )
         except MemoryError:
             traceback.print_exc()
-
-        wandb.finish()
-
-
-def _save_config_file_to_wandb(
-    config_content: bytes, config_name: str
-) -> None:
-    directory = get_workspace_path()
-    config_path = directory / config_name
-    with open(config_path, 'wb') as handle:
-        handle.write(config_content)
-    wandb.save(config_path, base_path=directory)
 
 
 def config_content(config_path: str) -> bytes:

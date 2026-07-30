@@ -10,5 +10,4 @@ wheels/
 auth.sh
 artifacts
 outputs
-wandb
 workspace

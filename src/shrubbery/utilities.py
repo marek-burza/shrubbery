@@ -53,13 +53,6 @@ def pare_down_number_of_eras_in_training_data(
     return training_data
 
 
-def dict_of_lists_to_list_of_dicts(dict_of_lists: dict) -> list:
-    return [
-        dict(zip(dict_of_lists, list(item)))
-        for item in zip(*dict_of_lists.values())
-    ]
-
-
 EPSILON = sys.float_info.epsilon
 
 

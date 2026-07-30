@@ -5,7 +5,6 @@ from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
-import wandb
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, RegressorMixin
 
 from shrubbery.constants import COLUMN_INDEX_TARGET
@@ -120,8 +119,6 @@ class Ensembler(
         if best:
             logger.info(f'Ensemble with highest score: {best}')
             self.estimator_names_best_ = best
-            if wandb.run is not None:
-                wandb.run.summary.update({'best_model': ' '.join(best)})
         return self
 
     def predict(self, x: np.ndarray) -> np.ndarray:
@@ -138,10 +135,6 @@ class Ensembler(
                 gc.collect()
         logger.info('Creating ensemble')
         logger.info(f'Ensemble: {self.estimator_names_best_}')
-        if wandb.run is not None:
-            wandb.run.summary.update(
-                {'best_model': ' '.join(self.estimator_names_best_)}
-            )
 
         ensemble = get_ensemble(self.ensemble_type)
         return mix_predictions(
@@ -230,8 +223,6 @@ class CombinatorialEnsembler(
         if best:
             logger.info(f'Ensemble with highest score: {best}')
             self.estimator_names_best_ = best
-            if wandb.run is not None:
-                wandb.run.summary.update({'best_model': ' '.join(best)})
         return self
 
     def predict(self, x: np.ndarray) -> np.ndarray:
@@ -248,10 +239,6 @@ class CombinatorialEnsembler(
                 gc.collect()
         logger.info('Creating ensemble')
         logger.info(f'Ensemble: {self.estimator_names_best_}')
-        if wandb.run is not None:
-            wandb.run.summary.update(
-                {'best_model': ' '.join(self.estimator_names_best_)}
-            )
 
         ensemble = get_ensemble(self.ensemble_type)
         return mix_predictions(

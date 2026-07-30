@@ -1,15 +1,11 @@
-import operator
 from typing import Any, Generator
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import BaseCrossValidator
 
 from shrubbery.constants import COLUMN_INDEX_ERA
-from shrubbery.data.ingest import locate_numerai_file
 from shrubbery.observability import logger
-from shrubbery.utilities import dict_of_lists_to_list_of_dicts
 
 
 # Numerai-specific cross-validation generator
@@ -97,90 +93,3 @@ class NumeraiTimeSeriesSplitter(BaseCrossValidator):
                 dtype=np.bool_
             )
             yield train_split_array, test_split_array
-
-
-def reformat_cross_validation_result(
-    cross_validation_result: dict, model_name: str
-) -> list[float]:
-    results = sorted(
-        dict_of_lists_to_list_of_dicts(cross_validation_result),
-        key=operator.itemgetter('rank_test_score'),
-    )
-    table_path = locate_numerai_file(f'cross_validation_{model_name}.csv')
-    pd.DataFrame(results).to_csv(table_path)
-    return results
-
-
-def get_best_parameters(
-    results: list, parameter: str, top_k: int
-) -> list[str]:
-    best_parameters = [item['params'][parameter] for item in results[:top_k]]
-    logger.info(
-        f'Best cross-validation values for "{parameter}": {best_parameters}'
-    )
-    return best_parameters
-
-
-def cross_validation_to_parallel_coordinates(
-    cross_validation_result: dict, model_name: str
-) -> None:
-    result = pd.DataFrame(cross_validation_result)
-    columns = [
-        column for column in result.columns if column.startswith('param_')
-    ] + ['mean_test_score']
-    result = result[columns]
-    result.columns = [
-        column.replace('param_', '') for column in result.columns
-    ]
-    for column in result.columns:
-        if result[column].dtype == 'object':
-            values = result[column].apply(str)
-            categories = values.unique().tolist()
-            result[column] = values.apply(categories.index)
-    result = result.sort_values('mean_test_score').reset_index(drop=True)
-    data_columns = list(result.columns)
-    column_mins = result.min()
-    column_maxs = result.max()
-    column_range = column_maxs - column_mins
-    result = (result - column_mins) / column_range
-    figure, axes = plt.subplots(figsize=(12, 6))
-    cmap = plt.colormaps['plasma']
-    norm = plt.Normalize(
-        vmin=column_mins['mean_test_score'],
-        vmax=column_maxs['mean_test_score'],
-    )
-    x = range(len(data_columns))
-    for _, row in result.iterrows():
-        axes.plot(
-            x, row[data_columns], color=cmap(row['mean_test_score']), alpha=0.7
-        )
-    for i in x:
-        axes.axvline(i, color='black', linewidth=0.5)
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    plt.colorbar(sm, ax=axes)
-    for i, column in enumerate(data_columns):
-        axes.text(
-            i + 0.02,
-            1.02,
-            f'{column_maxs[column]:.3g}',
-            ha='left',
-            va='bottom',
-            fontsize=8,
-        )
-        axes.text(
-            i + 0.02,
-            -0.02,
-            f'{column_mins[column]:.3g}',
-            ha='left',
-            va='top',
-            fontsize=8,
-        )
-        axes.text(i, -0.06, column, ha='center', va='top', fontsize=8)
-    axes.set_yticks([])
-    axes.set_xticks([])
-    title = f'Cross-validation result for {model_name}'
-    axes.set_title(title)
-    plt.tight_layout()
-    plot_path = locate_numerai_file(f'cross_validation_{model_name}.png')
-    plt.savefig(plot_path)
-    plt.close(figure)

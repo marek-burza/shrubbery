@@ -44,7 +44,7 @@ uv run python example.py --retrain
 
 ### Core Pipeline (`src/shrubbery/`)
 
-**Entry point**: `main.py` - `NumeraiRunner` implements training harness for model pipeline: data download → feature selection → model training → tournament submission. `WandbGridSearchCV` wraps scikit-learn's GridSearchCV to store results on W&B and is meant fir use with embargo-aware cross-validation.
+**Entry point**: `main.py` - `NumeraiRunner` implements training harness for model pipeline: data download → feature selection → model training → tournament submission.
 
 **Data layer** (`data/`): `ingest.py` downloads/caches Numerai datasets. `augmentation.py` and `downsampling.py` handle data preprocessing.
 
@@ -73,8 +73,6 @@ To run the code create `.env` script which sets the necessary environment variab
 
 - `NUMERAI_PUBLIC_ID` & `NUMERAI_SECRET_KEY` - Numerai API credentials
 - `NUMERAI_MODEL` - name of the model for submissions of predictions 
-- `WANDB_API_KEY` - credentials to the Weights & Biases API
-- `WANDB_ENTITY` & `WANDB_PROJECT` - the identifiers of Weights & Biases entity & project to upload plots and tables to
 
 ## CI/CD
 
