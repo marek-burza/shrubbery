@@ -89,6 +89,7 @@ class AutoencoderEmbedder(TorchEstimator):
         self.batch_norm_eps = batch_norm_eps
 
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
+        x = x.to(self.device)
         x_training, x_validation = x, None
         if self.early_stopping is not None:
             x_training, x_validation = train_test_split(
@@ -117,16 +118,12 @@ class AutoencoderEmbedder(TorchEstimator):
             else None
         )
         for epoch in range(self.epochs):
-            # Add fresh noise to the clean input each epoch (denoising
-            # autoencoder reconstructs the clean signal from a noisy input).
             x_training = (
                 x_clean + torch.randn_like(x_clean) * (0.1 * x_stddev)
                 if self.denoise
                 else x_clean
             )
-            dataset = TensorDataset(
-                x_training.to(self.device), x_clean.to(self.device)
-            )
+            dataset = TensorDataset(x_training, x_clean)
             loader = DataLoader(
                 dataset, batch_size=self.batch_size, shuffle=True
             )

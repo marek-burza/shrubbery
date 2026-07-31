@@ -4,7 +4,6 @@ from typing import Callable
 
 import numpy as np
 import torch
-import torch.jit as jit
 import torch.nn as nn
 import torch.nn.init as init
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -33,17 +32,17 @@ class TorchRegressor(BaseEstimator, RegressorMixin, ABC):
         self.device = device
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> 'TorchRegressor':
-        x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
-        y_tensor = torch.tensor(y, dtype=torch.float32).to(self.device)
+        x_training = torch.tensor(x, dtype=torch.float32).to(self.device)
+        y_training = torch.tensor(y, dtype=torch.float32).to(self.device)
         module, optimizer, criterion = self.prepare(input_dim=x.shape[1])
-        module = ModuleWrapper(module).to(self.device)
-        dataset = TensorDataset(x_tensor, y_tensor)
+        model = ModuleWrapper(module).to(self.device)
+        dataset = TensorDataset(x_training, y_training)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
         for epoch in range(self.epochs):
-            module.train()
+            model.train()
             for x_batch, y_batch in (progress := tqdm(loader)):
                 optimizer.zero_grad()
-                outputs = module(x_batch)
+                outputs = model(x_batch)
                 metric = criterion(outputs.squeeze(), y_batch)
                 metric.backward()
                 optimizer.step()
@@ -51,7 +50,7 @@ class TorchRegressor(BaseEstimator, RegressorMixin, ABC):
                     f'Training - epoch: {epoch}; metric: {metric:.4f}'
                 )
         self.serialized_model_ = io.BytesIO()
-        jit.save(jit.script(module), self.serialized_model_)
+        torch.jit.save(torch.jit.script(model), self.serialized_model_)
         self.serialized_model_.seek(0)
         return self
 
@@ -60,7 +59,7 @@ class TorchRegressor(BaseEstimator, RegressorMixin, ABC):
         self.serialized_model_.seek(0)
         model = torch.jit.load(self.serialized_model_)
         self.serialized_model_.seek(0)
-        model.eval()
+        model.eval().to(self.device)
         with torch.no_grad():
             predictions = model(x_tensor).cpu().numpy().squeeze()
         return predictions
@@ -73,7 +72,7 @@ class TorchRegressor(BaseEstimator, RegressorMixin, ABC):
         torch.optim.Optimizer,
         Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
     ]:
-        pass
+        raise NotImplementedError('TorchEstimator.module not implemented')
 
 
 def variance_scaling_initializer_with_fan_in(module: nn.Module) -> None:

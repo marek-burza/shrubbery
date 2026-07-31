@@ -197,13 +197,14 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
     def fit(self, x: np.ndarray, y: np.ndarray) -> 'TorchEstimator':
         x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
         y_tensor = torch.tensor(y, dtype=torch.float32).to(self.device)
-        module = self.train(x_tensor, y_tensor)
+        model = self.train(x_tensor, y_tensor)
         self.serialized_model_ = io.BytesIO()
-        torch.save(module.state_dict(), self.serialized_model_)
+        torch.save(model.state_dict(), self.serialized_model_)
         self.serialized_model_.seek(0)
         return self
 
     def transform(self, x: np.ndarray) -> np.ndarray:
+        x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
         self.serialized_model_.seek(0)
         module = self.module(input_dim=x.shape[1])
         model = ModelWrapper(module)
@@ -215,7 +216,6 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         model.eval().to(self.device)
         match self.compiler:
             case CompilerBackend.INDUCTOR:
-                x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
                 model = torch.compile(
                     model,
                     backend='inductor',
@@ -223,7 +223,6 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
                     dynamic=True,
                 )
             case CompilerBackend.JIT:
-                x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
                 model = torch.jit.script(model)
         with torch.inference_mode():
             result = model(x_tensor)

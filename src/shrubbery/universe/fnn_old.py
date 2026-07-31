@@ -30,10 +30,11 @@ def mse_with_weight_regularization(
     def l2_regularization(
         y_prediction: torch.Tensor, y_true: torch.Tensor
     ) -> torch.Tensor:
-        reg_loss = torch.tensor(0.0).to(device)
-        for param in module.parameters():
-            if param.ndim > 1:
-                reg_loss += torch.sum(param**2)
+        reg_loss = sum(
+            param.pow(2).sum()
+            for param in module.parameters()
+            if param.ndim > 1
+        )
         return mse(y_prediction, y_true) + scale * reg_loss
 
     return l2_regularization

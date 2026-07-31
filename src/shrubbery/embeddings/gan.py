@@ -17,37 +17,6 @@ from shrubbery.adapter import (
     variance_scaling_initializer_with_fan_in,
 )
 
-# Why BatchNorm is applied to every layer (including the final one) of both
-# the discriminator and the generator:
-#
-# * Discriminator final layer (Linear + BatchNorm, no activation):
-#   BCEWithLogitsLoss consumes raw logits. Applying BatchNorm to those logits
-#   normalizes them to roughly N(0, 1), which caps how confident the
-#   discriminator can become and prevents logit saturation. This acts as
-#   implicit output regularization, similar in spirit to (a much lighter
-#   form of) spectral normalization or gradient penalty.
-#
-# * Why this matters for embedding quality:
-#   In standard GAN training, an unconstrained discriminator tends to overfit
-#   by finding trivial shortcuts to separate real from fake, collapsing onto
-#   a shallow decision boundary. The BatchNorm constraint forces it to stay
-#   in a moderate-confidence regime, so to maintain discrimination ability
-#   it must build richer, more informative hidden representations. Those
-#   hidden layers are exactly what is extracted as the embedding, so a
-#   constrained discriminator yields higher-quality embeddings.
-#
-# * Generator final layer (Linear + BatchNorm + Sigmoid):
-#   BatchNorm before Sigmoid produces inputs near N(0, 1), so the Sigmoid
-#   maps them to a spread around 0.5 instead of saturating at 0 or 1. The
-#   resulting synthetic samples look more in-distribution, making the
-#   discriminator's task genuinely harder and reinforcing the pressure on
-#   the discriminator to learn better features.
-#
-# * Discriminator learning rate is NOT halved relative to the generator:
-#   The BatchNorm-based output constraint already prevents the discriminator
-#   from dominating, so an additional lr reduction would only slow learning
-#   of the hidden representations and degrade embedding quality.
-
 
 class DiscriminatorNetwork(nn.Module):
     def __init__(self, feature_count: int, layer_units: list[int]) -> None:
@@ -134,6 +103,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         self.discriminator_layer_units = discriminator_layer_units
 
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
+        x = x.to(self.device)
         # GAN
         feature_count = x.shape[1]
         discriminator = DiscriminatorNetwork(
@@ -171,8 +141,6 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
             self.epochs,
         )
         for epoch in (progress := tqdm(range(self.epochs))):
-            discriminator.train()
-            generator.train()
             for (x_batch,) in loader:
                 batch_size = x_batch.size(0)
                 # Train discriminator
@@ -186,10 +154,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
                     [x_batch, synthetic_features.detach()], dim=0
                 )
                 y_combined = torch.cat(
-                    [
-                        torch.ones(batch_size, 1),
-                        torch.zeros(batch_size, 1),
-                    ],
+                    [torch.ones(batch_size, 1), torch.zeros(batch_size, 1)],
                     dim=0,
                 ).to(self.device)
                 d_outputs = discriminator(x_combined)

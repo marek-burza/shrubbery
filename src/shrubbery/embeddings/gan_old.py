@@ -57,7 +57,7 @@ class GeneratorNetwork(nn.Module):
             generator_layers.append(nn.Linear(previous_units, units))
             # Placing normalization before activation may:
             # * stabilize training
-            # * improve activation performance (works better normalized inputs)
+            # * improve activation performance (better normalized inputs)
             # * convergence faster and get better results
             generator_layers.append(nn.BatchNorm1d(units))
             # Using ReLU (instead of sigmoid) on hidden layers may help
@@ -122,12 +122,11 @@ class GenerativeAdversarialNetworkEmbedder(BaseEstimator, TransformerMixin):
         criterion = nn.BCEWithLogitsLoss()
         # Training
         x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
-        y_tensor = torch.tensor(y, dtype=torch.float32).to(self.device)
-        dataset = TensorDataset(x_tensor, y_tensor)
+        dataset = TensorDataset(x_tensor)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
         generator.train()
         for epoch in (progress := tqdm(range(self.epochs))):
-            for x_batch, y_batch in loader:
+            for (x_batch,) in loader:
                 batch_size = x_batch.size(0)
                 # Train discriminator
                 discriminator.train()
@@ -155,8 +154,8 @@ class GenerativeAdversarialNetworkEmbedder(BaseEstimator, TransformerMixin):
                 )
                 fake_samples = generator(d_noise)
                 fake_outputs = discriminator(fake_samples)
-                y_mislabled = torch.ones(2 * batch_size, 1).to(self.device)
-                g_loss = criterion(fake_outputs, y_mislabled)
+                y_mislabeled = torch.ones(2 * batch_size, 1).to(self.device)
+                g_loss = criterion(fake_outputs, y_mislabeled)
                 g_loss.backward()
                 g_optimizer.step()
             progress.set_description(

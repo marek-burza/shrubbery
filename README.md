@@ -37,7 +37,7 @@ uv run python example.py --retrain
 
 **Linting**:
 ```bash
-/bin/sh .github/workflows/linting.sh
+/bin/sh .github/workflows/linter.sh
 ```
 
 ## Architecture

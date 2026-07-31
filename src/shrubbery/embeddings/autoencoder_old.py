@@ -87,7 +87,7 @@ class AutoencoderEmbedder(BaseEstimator, TransformerMixin):
         if self.denoise:
             x_variance = np.var(x, axis=0)
             x_stddev = np.sqrt(x_variance)
-        y_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
+        x_clean = torch.tensor(x, dtype=torch.float32).to(self.device)
         optimizer = torch.optim.Adam(
             module.parameters(),
             lr=self.learning_rate,
@@ -97,22 +97,24 @@ class AutoencoderEmbedder(BaseEstimator, TransformerMixin):
         for epoch in range(self.epochs):
             if self.denoise:
                 noise = np.random.normal(0, 0.1 * x_stddev, size=x.shape)
-                x_train = x + noise
+                x_training_array = x + noise
             else:
-                x_train = x
-            x_tensor = torch.tensor(x_train, dtype=torch.float32).to(
-                self.device
-            )
-            dataset = TensorDataset(x_tensor, y_tensor)
+                x_training_array = x
+            x_training = torch.tensor(
+                x_training_array, dtype=torch.float32
+            ).to(self.device)
+            dataset = TensorDataset(x_training, x_clean)
             loader = DataLoader(
                 dataset, batch_size=self.batch_size, shuffle=True
             )
             module.train()
             metric_sum = 0.0
-            for i, (x_batch, y_batch) in enumerate(progress := tqdm(loader)):
+            for i, (x_training_batch, x_clean_batch) in enumerate(
+                progress := tqdm(loader)
+            ):
                 optimizer.zero_grad()
-                outputs = module(x_batch)
-                metric = criterion(outputs, y_batch)
+                outputs = module(x_training_batch)
+                metric = criterion(outputs, x_clean_batch)
                 metric.backward()
                 torch.nn.utils.clip_grad_norm_(
                     module.parameters(), max_norm=1.0
