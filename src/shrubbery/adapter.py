@@ -10,7 +10,6 @@ import torch.nn as nn
 import torch.nn.init as init
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.model_selection import train_test_split
-from torch.amp import autocast
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
@@ -132,7 +131,6 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         learning_rate: float,
         device: str,
         compiler: CompilerBackend = CompilerBackend.JIT,
-        autocast: bool = False,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -141,14 +139,8 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         self.learning_rate = learning_rate
         self.device = device
         self.compiler = compiler
-        self.autocast = autocast
         self.learning_schedule = learning_schedule
         self.early_stopping = early_stopping
-
-    def autocast_context(self) -> AbstractContextManager:
-        if self.autocast:
-            return autocast(device_type=self.device, dtype=torch.bfloat16)
-        return nullcontext()
 
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
         x_training, y_training, x_validation, y_validation = x, y, None, None
@@ -178,9 +170,8 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
             model.train()
             for x_batch, y_batch in (progress := tqdm(loader)):
                 optimizer.zero_grad()
-                with self.autocast_context():
-                    outputs = model(x_batch)
-                    metric = criterion(outputs.squeeze(), y_batch)
+                outputs = model(x_batch)
+                metric = criterion(outputs.squeeze(), y_batch)
                 metric.backward()
                 optimizer.step()
                 progress.set_description(
@@ -195,11 +186,10 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
             ):
                 model.eval()
                 with torch.no_grad():
-                    with self.autocast_context():
-                        validation_output = model(x_validation)
-                        validation_loss = criterion(
-                            validation_output.squeeze(), y_validation
-                        ).item()
+                    validation_output = model(x_validation)
+                    validation_loss = criterion(
+                        validation_output.squeeze(), y_validation
+                    ).item()
                 if early_stopping_state.step(epoch, validation_loss):
                     break
         return model

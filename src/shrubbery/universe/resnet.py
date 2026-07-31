@@ -56,11 +56,6 @@ class ResNetRegressor(TorchEstimator):
             learning_rate=learning_rate,
             device=device,
             compiler=compiler,
-            # ResNet uses BCELoss, and PyTorch explicitly forbids BCELoss
-            # under autocast (it raises a RuntimeError, steering you to
-            # BCEWithLogitsLoss instead), so autocast is not exposed here and
-            # is forced off.
-            autocast=False,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

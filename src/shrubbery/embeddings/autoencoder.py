@@ -72,15 +72,6 @@ class AutoencoderEmbedder(TorchEstimator):
         batch_norm_eps: float,
         device: str,
         compiler: CompilerBackend = CompilerBackend.JIT,
-        # Caution: setting autocast=True trains in bfloat16
-        # bfloat16 keeps only ~2-3 significant decimal digits, so
-        # the autoencoder embeddings get quantized to a coarse grid. Those
-        # embeddings feed downstream tree models, and the lost resolution
-        # collapses distinct feature values into ties, shrinking the number
-        # of usable splits and degrading their predictions. Keep off
-        # (autocast=False) unless the speedup is worth
-        # measurably weaker embeddings.
-        autocast: bool = False,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -90,7 +81,6 @@ class AutoencoderEmbedder(TorchEstimator):
             learning_rate=learning_rate,
             device=device,
             compiler=compiler,
-            autocast=autocast,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )
@@ -146,9 +136,8 @@ class AutoencoderEmbedder(TorchEstimator):
                 progress := tqdm(loader)
             ):
                 optimizer.zero_grad()
-                with self.autocast_context():
-                    outputs = module(x_training_batch)
-                    metric = criterion(outputs, x_clean_batch)
+                outputs = module(x_training_batch)
+                metric = criterion(outputs, x_clean_batch)
                 metric.backward()
                 torch.nn.utils.clip_grad_norm_(
                     module.parameters(), max_norm=1.0
@@ -164,10 +153,9 @@ class AutoencoderEmbedder(TorchEstimator):
             if early_stopping_state is not None and x_validation is not None:
                 module.eval()
                 with torch.no_grad():
-                    with self.autocast_context():
-                        validation_loss = criterion(
-                            module(x_validation), x_validation
-                        ).item()
+                    validation_loss = criterion(
+                        module(x_validation), x_validation
+                    ).item()
                 if early_stopping_state.step(epoch, validation_loss):
                     break
         return ModelWrapper(module.encoder)

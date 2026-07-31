@@ -119,15 +119,6 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         learning_rate: float,
         device: str,
         compiler: CompilerBackend = CompilerBackend.JIT,
-        # Caution: setting autocast=True trains in bfloat16.
-        # bfloat16 keeps only ~2-3 significant decimal digits, so
-        # the discriminator embeddings get quantized to a coarse grid. Those
-        # embeddings feed downstream tree models, and the lost
-        # resolution collapses distinct feature values into ties, shrinking
-        # the number of usable splits and degrading their predictions. Keep
-        # off (autocast=False) unless the speedup is worth
-        # measurably weaker embeddings.
-        autocast: bool = False,
         learning_schedule: LearningSchedule | None = None,
     ) -> None:
         super().__init__(
@@ -136,7 +127,6 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
             learning_rate=learning_rate,
             device=device,
             compiler=compiler,
-            autocast=autocast,
             learning_schedule=learning_schedule,
         )
         self.latent_dim = latent_dim
@@ -188,38 +178,34 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
                 # Train discriminator
                 discriminator.train()
                 d_optimizer.zero_grad()
-                with self.autocast_context():
-                    g_noise = torch.randn(batch_size, self.latent_dim).to(
-                        self.device
-                    )
-                    synthetic_features = generator(g_noise)
-                    x_combined = torch.cat(
-                        [x_batch, synthetic_features.detach()], dim=0
-                    )
-                    y_combined = torch.cat(
-                        [
-                            torch.ones(batch_size, 1),
-                            torch.zeros(batch_size, 1),
-                        ],
-                        dim=0,
-                    ).to(self.device)
-                    d_outputs = discriminator(x_combined)
-                    d_loss = criterion(d_outputs, y_combined)
+                g_noise = torch.randn(batch_size, self.latent_dim).to(
+                    self.device
+                )
+                synthetic_features = generator(g_noise)
+                x_combined = torch.cat(
+                    [x_batch, synthetic_features.detach()], dim=0
+                )
+                y_combined = torch.cat(
+                    [
+                        torch.ones(batch_size, 1),
+                        torch.zeros(batch_size, 1),
+                    ],
+                    dim=0,
+                ).to(self.device)
+                d_outputs = discriminator(x_combined)
+                d_loss = criterion(d_outputs, y_combined)
                 d_loss.backward()
                 d_optimizer.step()
                 # Train generator
                 discriminator.eval()
                 g_optimizer.zero_grad()
-                with self.autocast_context():
-                    d_noise = torch.randn(2 * batch_size, self.latent_dim).to(
-                        self.device
-                    )
-                    fake_samples = generator(d_noise)
-                    fake_outputs = discriminator(fake_samples)
-                    y_mislabeled = torch.ones(2 * batch_size, 1).to(
-                        self.device
-                    )
-                    g_loss = criterion(fake_outputs, y_mislabeled)
+                d_noise = torch.randn(2 * batch_size, self.latent_dim).to(
+                    self.device
+                )
+                fake_samples = generator(d_noise)
+                fake_outputs = discriminator(fake_samples)
+                y_mislabeled = torch.ones(2 * batch_size, 1).to(self.device)
+                g_loss = criterion(fake_outputs, y_mislabeled)
                 g_loss.backward()
                 g_optimizer.step()
             if d_scheduler is not None:
