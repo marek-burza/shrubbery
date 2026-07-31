@@ -3,6 +3,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
+from shrubbery.ensemble import ensemble_sum_and_rank
 from shrubbery.evaluation import METRIC_PREDICTION_ID, validation_metrics
 from shrubbery.observability import logger
 
@@ -42,9 +43,8 @@ def top_mix(lut: dict, ascending: bool) -> str | None:
 def mix_predictions(
     predictions: dict[str, np.ndarray],
     pred_cols: list[str],
-    ensemble: Callable[[np.ndarray], np.ndarray],
 ) -> np.ndarray:
-    return ensemble(
+    return ensemble_sum_and_rank(
         np.concatenate(
             [predictions[pred_col].reshape(-1, 1) for pred_col in pred_cols],
             axis=1,
@@ -59,10 +59,9 @@ def mix_all(
     ensemble_metric_function: Callable,
     validation_stats: list[dict[str, float]],
     pred_cols: list[str],
-    ensemble: Callable[[np.ndarray], np.ndarray],
 ) -> None:
     predictions_name = _encode(set(pred_cols))
-    y_prediction = mix_predictions(predictions, pred_cols, ensemble)
+    y_prediction = mix_predictions(predictions, pred_cols)
     predictions[predictions_name] = y_prediction
     validation_metrics(
         x,
@@ -80,7 +79,6 @@ def mix_combinatorial(
     predictions: dict[str, np.ndarray],
     ensemble_metric_function: Callable,
     validation_stats: list[dict[str, float]],
-    ensemble: Callable[[np.ndarray], np.ndarray],
     sort_by: str,
     sort_ascending: bool,
     cap: int | None,
@@ -103,7 +101,6 @@ def mix_combinatorial(
             ensemble_metric_function,
             validation_stats,
             list(_decode(mix)),
-            ensemble,
         )
         lut = {
             item[METRIC_PREDICTION_ID]: item[sort_by]

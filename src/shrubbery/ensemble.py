@@ -19,22 +19,6 @@ class EnsembleType(str, Enum):
     SUM_AND_RANK = 'sum_and_rank'
 
 
-def get_ensemble(
-    ensemble_type: EnsembleType,
-) -> Callable[[np.ndarray], np.ndarray]:
-    if ensemble_type == EnsembleType.PRODUCT_AND_ROOT:
-        return ensemble_product_and_root
-    elif ensemble_type == EnsembleType.SUM_AND_RANK:
-        return ensemble_sum_and_rank
-    else:
-        raise ValueError(f'Unknown ensemble type: {ensemble_type}')
-
-
-# Inspired by: https://github.com/jimfleming/numerai/blob/master/ensemble.py#L22  # noqa: E501
-def ensemble_product_and_root(y_preds: np.ndarray) -> np.ndarray:
-    return np.power(np.prod(y_preds, axis=1), 1.0 / y_preds.shape[1])
-
-
 def ensemble_sum_and_rank(y_preds: np.ndarray) -> np.ndarray:
     return pd.DataFrame(y_preds).sum(axis=1).rank(pct=True).to_numpy()
 
@@ -56,8 +40,8 @@ class Ensembler(
         estimators: list[EstimatorConfig],
         ensemble_metric_function: Callable,
         ensemble_metric_greater_is_better: bool,
-        ensemble_type: EnsembleType,
         mix_combinatorial_cap: int | None,
+        ensemble_type: EnsembleType = EnsembleType.SUM_AND_RANK,
     ) -> None:
         self.estimators = estimators
         self.ensemble_metric_function = ensemble_metric_function
@@ -110,7 +94,6 @@ class Ensembler(
             predictions,
             ensemble_metric_function,
             validation_stats,
-            get_ensemble(self.ensemble_type),
             sort_by=METRIC_PREDICTION_VALUE,
             sort_ascending=ensemble_metric_ascending,
             cap=self.mix_combinatorial_cap,
@@ -135,11 +118,7 @@ class Ensembler(
                 gc.collect()
         logger.info('Creating ensemble')
         logger.info(f'Ensemble: {self.estimator_names_best_}')
-
-        ensemble = get_ensemble(self.ensemble_type)
-        return mix_predictions(
-            predictions, self.estimator_names_best_, ensemble
-        )
+        return mix_predictions(predictions, self.estimator_names_best_)
 
 
 class CombinatorialEnsembler(
@@ -150,9 +129,9 @@ class CombinatorialEnsembler(
         estimators: list[EstimatorConfig],
         ensemble_metric_function: Callable,
         ensemble_metric_greater_is_better: bool,
-        ensemble_type: EnsembleType,
         mix_combinatorial_cap: int | None,
         cv: Any,
+        ensemble_type: EnsembleType = EnsembleType.SUM_AND_RANK,
     ) -> None:
         self.estimators = estimators
         self.ensemble_metric_function = ensemble_metric_function
@@ -214,7 +193,6 @@ class CombinatorialEnsembler(
             predictions,
             ensemble_metric_function,
             validation_stats,
-            get_ensemble(self.ensemble_type),
             sort_by=METRIC_PREDICTION_VALUE,
             sort_ascending=ensemble_metric_ascending,
             cap=self.mix_combinatorial_cap,
@@ -239,8 +217,4 @@ class CombinatorialEnsembler(
                 gc.collect()
         logger.info('Creating ensemble')
         logger.info(f'Ensemble: {self.estimator_names_best_}')
-
-        ensemble = get_ensemble(self.ensemble_type)
-        return mix_predictions(
-            predictions, self.estimator_names_best_, ensemble
-        )
+        return mix_predictions(predictions, self.estimator_names_best_)
