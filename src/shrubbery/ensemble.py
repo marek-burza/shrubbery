@@ -19,10 +19,6 @@ class EnsembleType(str, Enum):
     SUM_AND_RANK = 'sum_and_rank'
 
 
-def ensemble_sum_and_rank(y_preds: np.ndarray) -> np.ndarray:
-    return pd.DataFrame(y_preds).sum(axis=1).rank(pct=True).to_numpy()
-
-
 METRIC = 'Metric'
 
 

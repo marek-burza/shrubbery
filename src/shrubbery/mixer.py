@@ -3,7 +3,6 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from shrubbery.ensemble import ensemble_sum_and_rank
 from shrubbery.evaluation import METRIC_PREDICTION_ID, validation_metrics
 from shrubbery.observability import logger
 
@@ -40,11 +39,15 @@ def top_mix(lut: dict, ascending: bool) -> str | None:
     return reports[0][0] if reports else None
 
 
+def mix_by_sum_and_rank(y_preds: np.ndarray) -> np.ndarray:
+    return pd.DataFrame(y_preds).sum(axis=1).rank(pct=True).to_numpy()
+
+
 def mix_predictions(
     predictions: dict[str, np.ndarray],
     pred_cols: list[str],
 ) -> np.ndarray:
-    return ensemble_sum_and_rank(
+    return mix_by_sum_and_rank(
         np.concatenate(
             [predictions[pred_col].reshape(-1, 1) for pred_col in pred_cols],
             axis=1,
