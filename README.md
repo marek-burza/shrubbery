@@ -1,6 +1,6 @@
 # Numerai Experiments
 
-Shrubbery is an experimental ML pipeline for generating predictions for Numerai, a hedge fund where trades are determined based on predictions crowdsourced from data scientists given anonymized data. It uses GPU-accelerated models, era-aware time series processing, and Weights & Biases for experiment tracking.
+Shrubbery is an experimental ML pipeline for generating predictions for Numerai, a hedge fund where trades are determined based on predictions crowdsourced from data scientists given anonymized data. It uses GPU-accelerated models, era-aware time series processing, and Weights & Biases for experiment tracking. It is also intended as experimentation ground for other code related to financial markets.
 
 ## Living Document
 
