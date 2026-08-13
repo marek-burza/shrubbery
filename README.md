@@ -101,3 +101,15 @@ Profiling Memory:
 uv run --with memray python -m memray run -o output.bin ../numerai/ails.py --retrain
 uv run --with memray python -m memray flamegraph output.bin
 ```
+
+## Branch-off Options
+
+- [Sovereign Tech Agency](https://www.sovereign.tech/)
+- [CrunchDAO](https://hub.crunchdao.com/competitions)
+- [Codabench](https://www.codabench.org/)
+- [AIcrowd](https://www.aicrowd.com/)
+- [Grand Challenge](https://grand-challenge.org/)
+- [Trustii.io](https://www.trustii.io/)
+- [Kelvins](https://kelvins.esa.int/)
+
+Note: Stay clear of US-based competition sponsors.
