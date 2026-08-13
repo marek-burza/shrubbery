@@ -10,11 +10,6 @@ RUN apt-get -yq update && \
         -o APT::Install-Suggests=false \
         build-essential \
         cmake \
-        curl \
-        ffmpeg \
-        git \
-        git-lfs \
-        jq \
         libatlas3-base \
         libblas-dev \
         libasound2-plugins \
@@ -25,17 +20,11 @@ RUN apt-get -yq update && \
         npm \
         ripgrep \
         software-properties-common \
-        sudo \
-        unzip && \
+        sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 # build-essential - N/A
 # cmake - lightgbm (older, non-wheel version)
-# curl - N/A
-# ffmpeg - N/A
-# git - N/A
-# git-lfs - N/A
-# jq - N/A
 # libatlas3-base - N/A
 # libblas-dev - N/A
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
@@ -46,7 +35,6 @@ RUN apt-get -yq update && \
 # npm - MCP (provides node, npx)
 # ripgrep - Claude Code
 # software-properties-common - Python
-# unzip - N/A
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_LINK_MODE=copy \
