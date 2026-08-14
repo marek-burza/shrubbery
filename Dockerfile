@@ -19,7 +19,6 @@ RUN apt-get -yq update && \
         pipewire-bin \
         npm \
         ripgrep \
-        software-properties-common \
         sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -34,7 +33,6 @@ RUN apt-get -yq update && \
 # pipewire-bin - Claude Code
 # npm - MCP (provides node, npx)
 # ripgrep - Claude Code
-# software-properties-common - Python
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_LINK_MODE=copy \
