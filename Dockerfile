@@ -10,11 +10,8 @@ RUN apt-get -yq update && \
         -o APT::Install-Suggests=false \
         build-essential \
         cmake \
-        libatlas3-base \
-        libblas-dev \
         libasound2-plugins \
         libnvidia-compute-595-server \
-        libopenblas-dev \
         ncurses-bin \
         pipewire-bin \
         npm \
@@ -24,11 +21,8 @@ RUN apt-get -yq update && \
     rm -rf /var/lib/apt/lists/*
 # build-essential - N/A
 # cmake - lightgbm (older, non-wheel version)
-# libatlas3-base - N/A
-# libblas-dev - N/A
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
 # libnvidia-compute-595-server - lightgbm
-# libopenblas-dev - N/A
 # ncurses-bin - Claude Code
 # pipewire-bin - Claude Code
 # npm - MCP (provides node, npx)
