@@ -113,3 +113,8 @@ uv run --with memray python -m memray flamegraph output.bin
 - [Kelvins](https://kelvins.esa.int/)
 
 Note: Stay clear of US-based competition sponsors.
+
+## Other
+
+- [Gloomberb - Open-source finance terminal](https://github.com/gloom-sh/gloomberb)
+- [Toast 1 - specialized search agent for financial analysis](https://www.mixedbread.com/blog/toast-1)
