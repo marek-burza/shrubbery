@@ -1,5 +1,6 @@
 import time
 from collections.abc import Callable
+from typing import cast
 
 import numexpr
 import numpy as np
@@ -158,16 +159,19 @@ class MaxFeatureExposure:
         validation_data_grouped, feature_indices = (
             _get_validation_data_grouped(x, y_true, y_pred)
         )
-        max_per_era = validation_data_grouped.apply(
-            lambda group: (
-                group[feature_indices]
-                .corrwith(group[COLUMN_Y_PRED])
-                .abs()
-                .max()
+        max_per_era = cast(
+            pd.Series,
+            validation_data_grouped.apply(
+                lambda group: (
+                    group[feature_indices]
+                    .corrwith(group[COLUMN_Y_PRED])
+                    .abs()
+                    .max()
+                ),
+                include_groups=False,
             ),
-            include_groups=False,
         )
-        return max_per_era.mean()
+        return float(max_per_era.mean())
 
 
 # Feature Neutral Correlation
