@@ -32,7 +32,7 @@ dependencies = [
     "sklearn-genetic-opt>=0.13.3",
     "torch>=2.8.0",
     "tqdm>=4.68.4",
-    "xgboost>=3.2.0",
+    "xgboost>=3.4.0",
 ]
 
 [dependency-groups]
