@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import requests
 import scipy
+from numerai_tools.scoring import numerai_corr
 from pandas.api.typing import DataFrameGroupBy
 from sklearn.metrics import mean_squared_error
 
@@ -44,7 +45,9 @@ def _calculate_validation_correlations(
     validation_correlations = validation_data.groupby(
         COLUMN_ERA, group_keys=False
     ).apply(
-        lambda group: _unif(group[COLUMN_Y_PRED]).corr(group[COLUMN_Y_TRUE]),
+        lambda group: numerai_corr(
+            group[[COLUMN_Y_PRED]], group[COLUMN_Y_TRUE]
+        ).iloc[0],
         include_groups=False,
     )
     return validation_correlations
