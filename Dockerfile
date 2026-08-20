@@ -10,6 +10,8 @@ RUN apt-get -yq update && \
         -o APT::Install-Suggests=false \
         build-essential \
         cmake \
+        curl \
+        git \
         libasound2-plugins \
         libnvidia-compute-595-server \
         ncurses-bin \
@@ -21,6 +23,8 @@ RUN apt-get -yq update && \
     rm -rf /var/lib/apt/lists/*
 # build-essential - N/A
 # cmake - lightgbm (older, non-wheel version)
+# curl - Claude Code
+# git - N/A
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
 # libnvidia-compute-595-server - lightgbm
 # ncurses-bin - Claude Code

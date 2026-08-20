@@ -18,4 +18,5 @@ podman run \
   -v $HOME/.cache/huggingface:/home/user/.cache/huggingface \
   -v $PWD:/home/user/workspace \
   -w /home/user/workspace \
+  --entrypoint /bin/bash \
   ghcr.io/marek-burza/shrubbery:latest
