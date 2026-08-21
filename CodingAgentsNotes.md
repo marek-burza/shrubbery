@@ -73,6 +73,28 @@ claude plugin update huggingface-best@huggingface-skills --scope user
 claude plugin update pyright-lsp@claude-plugins-official --scope user
 ```
 
+Other useful plugins:
+
+```shell
+# Pydantic
+claude plugin marketplace add pydantic/skills
+claude plugin install pydantic@pydantic-skills --scope user
+claude plugin install ai@pydantic-skills --scope user
+
+# Postgres
+claude plugin marketplace add neondatabase/postgres-skills
+claude plugin install postgres-best-practices@postgres-skills --scope user
+
+# dbt
+claude plugin marketplace add dbt-labs/dbt-agent-skills
+claude plugin install dbt@dbt-agent-marketplace --scope user
+
+# FastAPI
+git clone --depth 1 https://github.com/fastapi/fastapi /tmp/fastapi
+mkdir -p ~/.claude/skills/fastapi
+cp -r /tmp/fastapi/fastapi/.agents/skills/fastapi ~/.claude/skills/fastapi
+```
+
 ## Running Local Models
 
 ### `llama.cpp`
