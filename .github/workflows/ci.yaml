@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Preparing
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: "latest"
       - name: Linting
