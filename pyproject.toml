@@ -20,7 +20,7 @@ dependencies = [
     "numerai-tools>=0.5.3",
     "numerapi>=3.1.1",
     "numexpr>=2.14.1",
-    "numpy>=2.4.6,<2.5.0",  # 2.5.0 removes `row_stack` which is still used by `cuml`
+    "numpy>=2.4.6",
     "nvidia-modelopt>=0.45.0",
     "optuna>=4.9.0",
     "optuna-integration>=4.9.0",
@@ -47,6 +47,9 @@ build-backend = "uv_build"
 
 [tool.uv]
 index-strategy = "unsafe-best-match"
+# Kept here rather than in `dependencies` so Dependabot does not rewrite it:
+# 2.5.0 removes `row_stack` which is still used by `cuml`
+constraint-dependencies = [ "numpy<2.5.0" ]
 
 [tool.uv.sources]
 torch = [
