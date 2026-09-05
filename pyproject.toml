@@ -13,7 +13,7 @@ classifiers = [
 ]
 dependencies = [
     "catboost>=1.2.10",
-    "cudf-cu13>=26.8.0",
+    "cudf-cu13>=26.8.1",
     "cuml-cu13>=25.10.0",
     "lightgbm>=4.6.0",
     "matplotlib>=3.10.9",
