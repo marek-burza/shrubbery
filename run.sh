@@ -13,6 +13,7 @@ podman run \
   -e PIPEWIRE_REMOTE=/run/user/$(id -u)/pipewire-0 \
   -v /run/user/$(id -u)/pulse/native:/run/user/$(id -u)/pulse/native \
   -v /run/user/$(id -u)/pipewire-0:/run/user/$(id -u)/pipewire-0 \
+  -v $HOME/.ssh:/home/user/.ssh \
   -v $HOME/.claude.json:/home/user/.claude.json \
   -v $HOME/.claude:/home/user/.claude \
   -v $HOME/.cache/huggingface:/home/user/.cache/huggingface \
