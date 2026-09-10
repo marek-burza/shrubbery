@@ -26,18 +26,22 @@ dependencies = [
     "optuna-integration>=4.9.0",
     "pandas>=2.3.3",
     "psutil>=7.2.2",
+    "quantstats>=0.0.64",
     "requests>=2.33.1",
     "scikit-learn>=1.8.0",
     "scipy>=1.17.1",
     "sklearn-genetic-opt>=0.13.3",
     "torch>=2.8.0",
     "tqdm>=4.68.4",
+    "typer>=0.20.0",
     "xgboost>=3.4.0",
+    "yfinance>=0.2.66",
 ]
 
 [dependency-groups]
 dev = [
     "pdbpp>=0.12.1", # Extension of Python debugger
+    "pytest>=9.0.2", # Test runner
     "wat>=0.7.0", # Deep inspection of Python objects
 ]
 
@@ -69,3 +73,8 @@ line-length = 79
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.deptry.per_rule_ignores]
+# `trader.py` is a standalone PEP 723 script that carries its own inline
+# tests, so it imports `pytest` while `pytest` stays a dev dependency.
+DEP004 = [ "pytest" ]
