@@ -1716,7 +1716,7 @@ cu13 = [
 
 [[package]]
 name = "numerai-tools"
-version = "0.6.0"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
@@ -1724,9 +1724,9 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/89/7709fb71bc5ddddec7ba8b23db58c97ed5608a704d174a81cc0f8d70d1e7/numerai_tools-0.6.0.tar.gz", hash = "sha256:e70622a2491a6f76c51dbc620a1453900ae34083ac0b5914f36303e4321635f8", size = 13027, upload-time = "2026-06-10T21:42:15.34Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/70/ca46df12233099caf1e7c4844dc174385f6f6ee80d89f82eb272808bc80b/numerai_tools-0.7.0.tar.gz", hash = "sha256:5e1eac9c57aa9af5f6b2db34d8dbd8a62b52bc1a8988f0917a76ddd933c7ee70", size = 14292, upload-time = "2026-08-31T18:31:10.657Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/7c/bfa58c014110ea19ac1283c85be3439c0b523b940bc224a4d590e15d7ebc/numerai_tools-0.6.0-py3-none-any.whl", hash = "sha256:bff6fe3d5901b3d6c990ca2a9673868cc0f627f07c2232159e66578280057de8", size = 15736, upload-time = "2026-06-10T21:42:16.087Z" },
+    { url = "https://files.pythonhosted.org/packages/74/b3/78a373ce9ba7caa514c004202b7fb837ddcc8c7d072cce459ca486d766b9/numerai_tools-0.7.0-py3-none-any.whl", hash = "sha256:5386c724d31a0b53660cf4498c36914c7cd51ddf2d393a351062e55743899888", size = 17020, upload-time = "2026-08-31T18:31:11.646Z" },
 ]
 
 [[package]]
@@ -3235,7 +3235,7 @@ requires-dist = [
     { name = "cuml-cu13", specifier = ">=25.10.0" },
     { name = "lightgbm", specifier = ">=4.6.0" },
     { name = "matplotlib", specifier = ">=3.10.9" },
-    { name = "numerai-tools", specifier = ">=0.5.3" },
+    { name = "numerai-tools", specifier = ">=0.7.0" },
     { name = "numerapi", specifier = ">=3.1.1" },
     { name = "numexpr", specifier = ">=2.14.1" },
     { name = "numpy", specifier = ">=2.4.6" },
