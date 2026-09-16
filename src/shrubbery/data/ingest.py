@@ -57,7 +57,7 @@ def download_file_and_investigate(
     logger.info(f'Downloading {file_name} to {current_file_path}')
     if investigate:
         previous_file_hash = file_hash(previous_file_path)
-    napi.download_dataset(f'v5.2/{file_name}', str(current_file_path))
+    napi.download_dataset(f'v5.3/{file_name}', str(current_file_path))
     if file_name.endswith('.parquet'):
         length = len(pd.read_parquet(current_file_path, columns=[]))
         logger.info(f'File {file_name} has {length} rows')
