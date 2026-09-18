@@ -88,7 +88,7 @@ class AutoencoderEmbedder(TorchEstimator):
         self.batch_norm_eps = batch_norm_eps
 
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
-        x = x.to(self.device)
+        x = x.to(self._device)
         x_training, x_validation = x, None
         if self.early_stopping is not None:
             cut = chronological_cut(
@@ -99,7 +99,7 @@ class AutoencoderEmbedder(TorchEstimator):
         input_dim = x_training.shape[1]
         module = AutoencoderNetwork(
             input_dim, self.layer_units, self.batch_norm_eps
-        ).to(self.device)
+        ).to(self._device)
         # Training
         x_clean = x_training
         rows = x_clean.shape[0]

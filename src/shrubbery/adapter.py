@@ -150,6 +150,10 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         self.learning_schedule = learning_schedule
         self.early_stopping = early_stopping
 
+    @property
+    def _device(self) -> torch.device:
+        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
         x_training, y_training, x_validation, y_validation = x, y, None, None
         if self.early_stopping is not None:
@@ -159,7 +163,7 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
             x_training, x_validation = x[:cut], x[cut:]
             y_training, y_validation = y[:cut], y[cut:]
         module = self.module(input_dim=x_training.shape[1])
-        model = ModelWrapper(module).to(self.device)
+        model = ModelWrapper(module).to(self._device)
         rows = x_training.shape[0]
         optimizer, criterion = self.prepare(model)
         scheduler = make_scheduler(
@@ -203,8 +207,8 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         return model
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> 'TorchEstimator':
-        x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
-        y_tensor = torch.tensor(y, dtype=torch.float32).to(self.device)
+        x_tensor = torch.tensor(x, dtype=torch.float32).to(self._device)
+        y_tensor = torch.tensor(y, dtype=torch.float32).to(self._device)
         model = self.train(x_tensor, y_tensor)
         self.serialized_model_ = io.BytesIO()
         torch.save(model.state_dict(), self.serialized_model_)
@@ -212,16 +216,20 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         return self
 
     def transform(self, x: np.ndarray) -> np.ndarray:
-        x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
+        x_tensor = torch.tensor(x, dtype=torch.float32).to(self._device)
         self.serialized_model_.seek(0)
         module = self.module(input_dim=x.shape[1])
         model = ModelWrapper(module)
         # Load only weights (avoid executing arbitrary pickle code risk)
         model.load_state_dict(
-            torch.load(self.serialized_model_, weights_only=True)
+            torch.load(
+                self.serialized_model_,
+                map_location=self._device,
+                weights_only=True,
+            )
         )
         self.serialized_model_.seek(0)
-        model.eval().to(self.device)
+        model.eval().to(self._device)
         torch.set_float32_matmul_precision('highest')
         model = torch.compile(
             model,

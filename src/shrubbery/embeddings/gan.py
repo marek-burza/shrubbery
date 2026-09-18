@@ -102,12 +102,12 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         self.discriminator_layer_units = discriminator_layer_units
 
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
-        x = x.to(self.device)
+        x = x.to(self._device)
         # GAN
         feature_count = x.shape[1]
         discriminator = DiscriminatorNetwork(
             feature_count, self.discriminator_layer_units
-        ).to(self.device)
+        ).to(self._device)
         d_optimizer = torch.optim.Adam(
             discriminator.parameters(),
             lr=self.learning_rate,
@@ -117,7 +117,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
             self.latent_dim,
             self.generator_layer_units,
             feature_count,
-        ).to(self.device)
+        ).to(self._device)
         g_optimizer = torch.optim.Adam(
             generator.parameters(),
             lr=self.learning_rate,
@@ -147,7 +147,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
                 discriminator.train()
                 d_optimizer.zero_grad()
                 g_noise = torch.randn(batch_size, self.latent_dim).to(
-                    self.device
+                    self._device
                 )
                 synthetic_features = generator(g_noise)
                 x_combined = torch.cat(
@@ -156,7 +156,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
                 y_combined = torch.cat(
                     [torch.ones(batch_size, 1), torch.zeros(batch_size, 1)],
                     dim=0,
-                ).to(self.device)
+                ).to(self._device)
                 d_outputs = discriminator(x_combined)
                 d_loss = criterion(d_outputs, y_combined)
                 d_loss.backward()
@@ -165,11 +165,11 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
                 discriminator.eval()
                 g_optimizer.zero_grad()
                 d_noise = torch.randn(2 * batch_size, self.latent_dim).to(
-                    self.device
+                    self._device
                 )
                 fake_samples = generator(d_noise)
                 fake_outputs = discriminator(fake_samples)
-                y_mislabeled = torch.ones(2 * batch_size, 1).to(self.device)
+                y_mislabeled = torch.ones(2 * batch_size, 1).to(self._device)
                 g_loss = criterion(fake_outputs, y_mislabeled)
                 g_loss.backward()
                 g_optimizer.step()
