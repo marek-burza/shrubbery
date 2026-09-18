@@ -130,7 +130,7 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         batch_size: int,
         learning_rate: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.JIT,
+        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -214,16 +214,13 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         )
         self.serialized_model_.seek(0)
         model.eval().to(self.device)
-        match self.compiler:
-            case CompilerBackend.INDUCTOR:
-                model = torch.compile(
-                    model,
-                    backend='inductor',
-                    mode='max-autotune',
-                    dynamic=True,
-                )
-            case CompilerBackend.JIT:
-                model = torch.jit.script(model)
+        torch.set_float32_matmul_precision('highest')
+        model = torch.compile(
+            model,
+            backend='inductor',
+            mode='max-autotune',
+            dynamic=True,
+        )
         with torch.inference_mode():
             result = model(x_tensor)
         return result.cpu().numpy().squeeze()

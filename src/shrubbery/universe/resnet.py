@@ -46,7 +46,7 @@ class ResNetRegressor(TorchEstimator):
         epochs: int,
         batch_size: int,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.JIT,
+        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:

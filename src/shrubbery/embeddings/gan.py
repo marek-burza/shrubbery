@@ -87,7 +87,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         discriminator_layer_units: list[int],
         learning_rate: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.JIT,
+        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
     ) -> None:
         super().__init__(
