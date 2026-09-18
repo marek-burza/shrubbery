@@ -1,4 +1,5 @@
 import io
+import math
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from enum import Enum
@@ -9,8 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 
@@ -22,6 +21,15 @@ class CompilerBackend(str, Enum):
 class SchedulerType(str, Enum):
     COSINE = 'cosine'
     ONE_CYCLE = 'one_cycle'
+
+
+def chronological_cut(rows: int, validation_fraction: float) -> int:
+    """
+    Index splitting rows into a training prefix and a validation suffix,
+    matching train_test_split(..., shuffle=False). The split stays
+    chronological so later eras never leak into training.
+    """
+    return rows - math.ceil(validation_fraction * rows)
 
 
 @dataclass(frozen=True)
@@ -145,18 +153,14 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
     def train(self, x: torch.Tensor, y: torch.Tensor) -> nn.Module:
         x_training, y_training, x_validation, y_validation = x, y, None, None
         if self.early_stopping is not None:
-            x_training, x_validation, y_training, y_validation = (
-                train_test_split(
-                    x,
-                    y,
-                    test_size=self.early_stopping.val_fraction,
-                    shuffle=False,
-                )
+            cut = chronological_cut(
+                x.shape[0], self.early_stopping.val_fraction
             )
+            x_training, x_validation = x[:cut], x[cut:]
+            y_training, y_validation = y[:cut], y[cut:]
         module = self.module(input_dim=x_training.shape[1])
         model = ModelWrapper(module).to(self.device)
-        dataset = TensorDataset(x_training, y_training)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        rows = x_training.shape[0]
         optimizer, criterion = self.prepare(model)
         scheduler = make_scheduler(
             optimizer, self.learning_schedule, self.learning_rate, self.epochs
@@ -168,7 +172,11 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         )
         for epoch in range(self.epochs):
             model.train()
-            for x_batch, y_batch in (progress := tqdm(loader)):
+            order = torch.randperm(rows, device=x_training.device)
+            starts = range(0, rows, self.batch_size)
+            for start in (progress := tqdm(starts)):
+                indices = order[start : start + self.batch_size]
+                x_batch, y_batch = x_training[indices], y_training[indices]
                 optimizer.zero_grad()
                 outputs = model(x_batch)
                 metric = criterion(outputs.squeeze(), y_batch)

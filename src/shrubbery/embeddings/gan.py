@@ -5,7 +5,6 @@
 # * https://github.com/eriklindernoren/Keras-GAN/blob/master/gan/gan.py  # noqa: E501
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from shrubbery.adapter import (
@@ -126,8 +125,7 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         )
         criterion = nn.BCEWithLogitsLoss()
         # Training
-        dataset = TensorDataset(x)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        rows = x.shape[0]
         d_scheduler = make_scheduler(
             d_optimizer,
             self.learning_schedule,
@@ -141,7 +139,9 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
             self.epochs,
         )
         for epoch in (progress := tqdm(range(self.epochs))):
-            for (x_batch,) in loader:
+            order = torch.randperm(rows, device=x.device)
+            for start in range(0, rows, self.batch_size):
+                x_batch = x[order[start : start + self.batch_size]]
                 batch_size = x_batch.size(0)
                 # Train discriminator
                 discriminator.train()

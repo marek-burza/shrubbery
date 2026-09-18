@@ -1,8 +1,6 @@
 # Code inspired by: https://github.com/jimfleming/numerai/blob/master/models/autoencoder/model.py  # noqa: E501
 import torch
 import torch.nn as nn
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from shrubbery.adapter import (
@@ -12,6 +10,7 @@ from shrubbery.adapter import (
     LearningSchedule,
     ModelWrapper,
     TorchEstimator,
+    chronological_cut,
     make_scheduler,
     variance_scaling_initializer_with_fan_in,
 )
@@ -92,9 +91,10 @@ class AutoencoderEmbedder(TorchEstimator):
         x = x.to(self.device)
         x_training, x_validation = x, None
         if self.early_stopping is not None:
-            x_training, x_validation = train_test_split(
-                x, test_size=self.early_stopping.val_fraction, shuffle=False
+            cut = chronological_cut(
+                x.shape[0], self.early_stopping.val_fraction
             )
+            x_training, x_validation = x[:cut], x[cut:]
         # Autoencoder
         input_dim = x_training.shape[1]
         module = AutoencoderNetwork(
@@ -102,6 +102,7 @@ class AutoencoderEmbedder(TorchEstimator):
         ).to(self.device)
         # Training
         x_clean = x_training
+        rows = x_clean.shape[0]
         x_stddev = x_clean.var(dim=0).sqrt()
         optimizer = torch.optim.Adam(
             module.parameters(),
@@ -123,15 +124,14 @@ class AutoencoderEmbedder(TorchEstimator):
                 if self.denoise
                 else x_clean
             )
-            dataset = TensorDataset(x_training, x_clean)
-            loader = DataLoader(
-                dataset, batch_size=self.batch_size, shuffle=True
-            )
             module.train()
             metric_sum = 0.0
-            for i, (x_training_batch, x_clean_batch) in enumerate(
-                progress := tqdm(loader)
-            ):
+            order = torch.randperm(rows, device=x_clean.device)
+            starts = range(0, rows, self.batch_size)
+            for i, start in enumerate(progress := tqdm(starts)):
+                indices = order[start : start + self.batch_size]
+                x_training_batch = x_training[indices]
+                x_clean_batch = x_clean[indices]
                 optimizer.zero_grad()
                 outputs = module(x_training_batch)
                 metric = criterion(outputs, x_clean_batch)
