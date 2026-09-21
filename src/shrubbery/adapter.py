@@ -126,14 +126,12 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         epochs: int,
         batch_size: int,
         learning_rate: float,
-        device: str,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
-        self.device = device
         self.learning_schedule = learning_schedule
         self.early_stopping = early_stopping
 

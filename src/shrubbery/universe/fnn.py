@@ -52,7 +52,6 @@ class FeedforwardNeuralNetworkRegressor(TorchEstimator):
         learning_rate: float,
         regularization_scale: float,
         epochs: int,
-        device: str,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -60,7 +59,6 @@ class FeedforwardNeuralNetworkRegressor(TorchEstimator):
             epochs=epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
-            device=device,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

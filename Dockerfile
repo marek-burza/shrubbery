@@ -15,6 +15,7 @@ RUN apt-get -yq update && \
         libasound2-plugins \
         libnvidia-compute-595-server \
         ncurses-bin \
+        openssh-client \
         pipewire-bin \
         npm \
         ripgrep \
@@ -28,6 +29,7 @@ RUN apt-get -yq update && \
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
 # libnvidia-compute-595-server - lightgbm
 # ncurses-bin - Claude Code
+# openssh-client - git push over SSH
 # pipewire-bin - Claude Code
 # npm - MCP (provides node, npx)
 # ripgrep - Claude Code

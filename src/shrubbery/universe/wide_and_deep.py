@@ -136,7 +136,6 @@ class WideAndDeepRegressor(TorchEstimator):
         optimizer_l1_regularization_strength: float,
         optimizer_l2_regularization_strength: float,
         learning_rate: float,
-        device: str,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -144,7 +143,6 @@ class WideAndDeepRegressor(TorchEstimator):
             epochs=epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
-            device=device,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

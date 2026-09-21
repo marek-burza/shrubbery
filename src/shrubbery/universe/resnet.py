@@ -44,7 +44,6 @@ class ResNetRegressor(TorchEstimator):
         weight_decay: float,
         epochs: int,
         batch_size: int,
-        device: str,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -52,7 +51,6 @@ class ResNetRegressor(TorchEstimator):
             epochs=epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
-            device=device,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

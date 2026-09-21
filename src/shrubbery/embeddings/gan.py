@@ -84,14 +84,12 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         generator_layer_units: list[int],
         discriminator_layer_units: list[int],
         learning_rate: float,
-        device: str,
         learning_schedule: LearningSchedule | None = None,
     ) -> None:
         super().__init__(
             epochs=epochs,
             batch_size=batch_size,
             learning_rate=learning_rate,
-            device=device,
             learning_schedule=learning_schedule,
         )
         self.latent_dim = latent_dim
