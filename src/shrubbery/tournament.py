@@ -3,12 +3,6 @@ import time
 import pandas as pd
 import requests
 
-from shrubbery.constants import (
-    COLUMN_MMC,
-    COLUMN_ROUND_NUMBER,
-    COLUMN_V2_CORR20,
-)
-from shrubbery.data.ingest import locate_numerai_file
 from shrubbery.napi import napi
 from shrubbery.observability import logger
 from shrubbery.utilities import save_prediction
@@ -62,14 +56,3 @@ def get_performances(numerai_model_id: str) -> pd.DataFrame:
         )
     )
     return performances.join(submission_scores)
-
-
-def update_tournament_submissions(numerai_model_id: str) -> None:
-    try:
-        performances = get_performances(numerai_model_id)
-    except KeyError:
-        # New model, ignore error
-        return
-    performances[[COLUMN_ROUND_NUMBER, COLUMN_MMC, COLUMN_V2_CORR20]].to_csv(
-        locate_numerai_file(f'parformances_{numerai_model_id}.csv')
-    )

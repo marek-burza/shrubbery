@@ -4,7 +4,6 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from shrubbery.adapter import (
-    CompilerBackend,
     EarlyStopping,
     EarlyStoppingState,
     LearningSchedule,
@@ -70,7 +69,6 @@ class AutoencoderEmbedder(TorchEstimator):
         learning_rate: float,
         batch_norm_eps: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -79,7 +77,6 @@ class AutoencoderEmbedder(TorchEstimator):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
-            compiler=compiler,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

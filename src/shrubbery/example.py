@@ -2,8 +2,8 @@ import os
 
 from xgboost import XGBRegressor
 
-from shrubbery.main import NumeraiRunner, config_content, main_arguments
-from shrubbery.neutralization import NumeraiNeutralization
+from shrubbery.main import NumeraiRunner, main_arguments
+from shrubbery.neutralization import NumeraiToolsNeutralization
 
 if __name__ == '__main__':
     arguments = main_arguments()
@@ -14,14 +14,12 @@ if __name__ == '__main__':
         feature_set_name='small',  # fncv3_features
         retrain=True,
         deterministic=False,
-        estimator=NumeraiNeutralization(
-            neutralization_cap=50,
+        estimator=NumeraiToolsNeutralization(
             neutralization_proportion=1.0,
-            neutralization_normalize=True,
             estimator=XGBRegressor(
                 device='cuda',
                 verbosity=1,
                 n_jobs=-1,
             ),
         ),
-    ).run(config_content(__file__), 'run_config.py')
+    ).run()

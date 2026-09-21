@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 from shrubbery.adapter import (
-    CompilerBackend,
     EarlyStopping,
     LearningSchedule,
     TorchEstimator,
@@ -46,7 +45,6 @@ class ResNetRegressor(TorchEstimator):
         epochs: int,
         batch_size: int,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -55,7 +53,6 @@ class ResNetRegressor(TorchEstimator):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
-            compiler=compiler,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

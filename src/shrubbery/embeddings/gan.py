@@ -8,7 +8,6 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from shrubbery.adapter import (
-    CompilerBackend,
     LearningSchedule,
     ModelWrapper,
     TorchEstimator,
@@ -86,7 +85,6 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
         discriminator_layer_units: list[int],
         learning_rate: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
     ) -> None:
         super().__init__(
@@ -94,7 +92,6 @@ class GenerativeAdversarialNetworkEmbedder(TorchEstimator):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
-            compiler=compiler,
             learning_schedule=learning_schedule,
         )
         self.latent_dim = latent_dim

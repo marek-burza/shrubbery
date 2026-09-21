@@ -4,8 +4,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, RegressorMixin
 from sklearn.compose import ColumnTransformer
 
-from shrubbery.constants import COLUMN_INDEX_ERA, COLUMN_TARGET
-from shrubbery.data.ingest import lookup_target_index
+from shrubbery.constants import COLUMN_INDEX_ERA, COLUMN_INDEX_TARGET
 
 
 class NumeraiFeaturesSelector(ColumnTransformer):
@@ -18,7 +17,7 @@ class NumeraiFeaturesSelector(ColumnTransformer):
 
 class NumeraiTargetSelector(RegressorMixin, MetaEstimatorMixin, BaseEstimator):
     def __init__(
-        self, estimator: Any, target: int | str = COLUMN_TARGET
+        self, estimator: Any, target: int = COLUMN_INDEX_TARGET
     ) -> None:
         self.estimator = estimator
         self.target = target
@@ -26,10 +25,7 @@ class NumeraiTargetSelector(RegressorMixin, MetaEstimatorMixin, BaseEstimator):
     def fit(
         self, x: np.ndarray, y: np.ndarray, **kwargs: dict[str, Any]
     ) -> 'NumeraiTargetSelector':
-        if isinstance(self.target, int):
-            target = self.target
-        else:
-            target = lookup_target_index(self.target)
+        target = self.target
         self.estimator.fit(x, y[:, [target]].ravel())
         self.fitted_ = True
         return self

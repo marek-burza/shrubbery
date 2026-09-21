@@ -12,7 +12,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 from shrubbery.adapter import (
-    CompilerBackend,
     EarlyStopping,
     LearningSchedule,
     TorchEstimator,
@@ -138,7 +137,6 @@ class WideAndDeepRegressor(TorchEstimator):
         optimizer_l2_regularization_strength: float,
         learning_rate: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -147,7 +145,6 @@ class WideAndDeepRegressor(TorchEstimator):
             batch_size=batch_size,
             learning_rate=learning_rate,
             device=device,
-            compiler=compiler,
             learning_schedule=learning_schedule,
             early_stopping=early_stopping,
         )

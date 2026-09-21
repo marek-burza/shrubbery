@@ -74,14 +74,3 @@ def get_biggest_change_features(
     worst_n = (ranked if n is None else ranked.head(n)).index.tolist()
 
     return sorted(worst_n)
-
-
-def numeric_eras(name: str, data: pd.DataFrame) -> list:
-    eras = sorted(list(set(data[COLUMN_ERA])))
-    logger.info(f'Eras in {name}: {eras[:2]} - {eras[-2:]}')
-    return eras
-
-
-def override_numerai_era(eras: list, data: pd.DataFrame) -> None:
-    next_era = np.float32(max([int(era) for era in eras]) + 1)
-    data[COLUMN_ERA] = next_era

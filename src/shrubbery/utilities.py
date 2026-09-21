@@ -1,13 +1,10 @@
-import sys
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from shrubbery.constants import COLUMN_ERA
 from shrubbery.observability import logger
 
 MODEL_SUBDIRECTORY = 'models'
@@ -41,28 +38,6 @@ def load_model(model_file: Path) -> Any:
         logger.error('Model failed to materialize')
         return None
     return model
-
-
-def pare_down_number_of_eras_in_training_data(
-    training_data: pd.DataFrame, every_nth: int
-) -> pd.DataFrame:
-    every_nth_era = training_data[COLUMN_ERA].unique()[::every_nth]
-    training_data = training_data[
-        training_data[COLUMN_ERA].isin(every_nth_era)
-    ]
-    return training_data
-
-
-EPSILON = sys.float_info.epsilon
-
-
-# Using rank takes care of the need to use this function
-def trim_probability_array(array: np.ndarray) -> np.ndarray:
-    return np.clip(array, 0.0 + EPSILON, 1.0 - EPSILON)
-
-
-def identity(array: Any) -> Any:
-    return array
 
 
 def model_to_string(model: Any) -> str:

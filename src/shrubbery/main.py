@@ -5,19 +5,17 @@ import subprocess
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.model_selection import GridSearchCV
 
 from shrubbery.constants import (
     COLUMN_ERA,
     COLUMN_ID,
     RANDOM_SEED,
 )
-from shrubbery.data.augmentation import override_numerai_era
 from shrubbery.data.ingest import (
     download_numerai_files,
     get_feature_set,
@@ -27,10 +25,7 @@ from shrubbery.data.ingest import (
 from shrubbery.metrics import submit_diagnostic_predictions
 from shrubbery.napi import napi
 from shrubbery.observability import logger, silence_false_positive_warnings
-from shrubbery.tournament import (
-    submit_tournament_predictions,
-    update_tournament_submissions,
-)
+from shrubbery.tournament import submit_tournament_predictions
 from shrubbery.utilities import load_model, store_model
 
 
@@ -53,7 +48,7 @@ class NumeraiRunner:
         self.notes = notes
         self.deterministic = deterministic
 
-    def run(self, config_content: bytes, config_name: str) -> None:
+    def run(self) -> None:
         if self.deterministic:
             # Seeding pins every stochastic component (weight init, dropout,
             # DataLoader shuffling, GAN/denoise noise, unseeded RF bootstrap)
@@ -64,7 +59,6 @@ class NumeraiRunner:
             torch.manual_seed(RANDOM_SEED)
             np.random.seed(RANDOM_SEED)
         silence_false_positive_warnings()
-        update_tournament_submissions(self.numerai_model_id)
         tournament_round = napi.get_current_round()
         logger.info(f'Tournament round: {tournament_round}')
         logger.info(f'Model Name: {self.numerai_model_id}')
@@ -74,16 +68,15 @@ class NumeraiRunner:
         targets = get_training_targets()
         read_columns = [COLUMN_ERA] + feature_cols + targets
 
-        training_data, training_eras = read_parquet_and_unpack(
+        training_data = read_parquet_and_unpack(
             'train.parquet', read_columns, feature_cols
         )
-        validation_data, validation_eras = read_parquet_and_unpack(
+        validation_data = read_parquet_and_unpack(
             'validation.parquet', read_columns, feature_cols
         )
-        live_data, _ = read_parquet_and_unpack(
+        live_data = read_parquet_and_unpack(
             'live.parquet', read_columns, feature_cols
         )
-        override_numerai_era(training_eras + validation_eras, live_data)
 
         # Check for nans and fill nans
         nans_per_col = live_data[feature_cols].isna().sum()
@@ -138,10 +131,6 @@ class NumeraiRunner:
             traceback.print_exc()
 
 
-def config_content(config_path: str) -> bytes:
-    return Path(config_path).read_bytes()
-
-
 def main_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Shrubbery')
     parser.add_argument(
@@ -154,10 +143,10 @@ def main_arguments() -> argparse.Namespace:
         help='Use this argument to downsample eras by given stride',
     )
     parser.add_argument(
-        '--debug', action='store_true', help='Start bash shell in-situ'
+        '--live', action='store_true', help='Start bash shell in-situ'
     )
     arguments = parser.parse_args()
-    if arguments.debug:
+    if arguments.live:
         subprocess.run('/bin/bash')
         sys.exit()
     return arguments

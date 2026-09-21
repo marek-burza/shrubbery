@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from shrubbery.constants import COLUMN_ERA
-from shrubbery.data.augmentation import numeric_eras
 from shrubbery.napi import napi
 from shrubbery.observability import logger
 
@@ -63,7 +62,7 @@ def get_feature_set(selected_feature_set: str) -> list[str]:
 
 def read_parquet_and_unpack(
     file_name: str, read_columns: list[str], feature_cols: list[str]
-) -> tuple[pd.DataFrame, list]:
+) -> pd.DataFrame:
     logger.info(f'Reading {file_name}')
     data = pd.read_parquet(
         locate_numerai_file(file_name), columns=read_columns
@@ -76,8 +75,7 @@ def read_parquet_and_unpack(
     data_column_era = data[COLUMN_ERA]
     data_column_era = np.where(data_column_era == 'X', np.nan, data_column_era)
     data[COLUMN_ERA] = data_column_era.astype(np.float32)
-    eras = numeric_eras(file_name, data)
-    return data, eras
+    return data
 
 
 def get_training_targets() -> list[str]:
@@ -102,15 +100,5 @@ def get_training_targets() -> list[str]:
                 f'Dropped {target} after checking for infinity & NaN'
             )
     finite_targets = sorted(finite_targets)
-    target_names = locate_numerai_file('target_names.json')
-    with target_names.open('w') as handle:
-        json.dump(finite_targets, handle, indent=4)
     logger.info(f'Targets - {finite_targets}')
     return finite_targets
-
-
-def lookup_target_index(target_name: str) -> int:
-    target_names = locate_numerai_file('target_names.json')
-    with target_names.open('r') as handle:
-        training_targets = json.load(handle)
-    return training_targets.index(target_name)

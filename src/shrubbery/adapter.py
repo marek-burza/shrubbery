@@ -1,6 +1,5 @@
 import io
 import math
-from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
@@ -13,22 +12,12 @@ from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from tqdm import tqdm
 
 
-class CompilerBackend(str, Enum):
-    INDUCTOR = 'inductor'
-    JIT = 'jit'
-
-
 class SchedulerType(str, Enum):
     COSINE = 'cosine'
     ONE_CYCLE = 'one_cycle'
 
 
 def chronological_cut(rows: int, validation_fraction: float) -> int:
-    """
-    Index splitting rows into a training prefix and a validation suffix,
-    matching train_test_split(..., shuffle=False). The split stays
-    chronological so later eras never leak into training.
-    """
     return rows - math.ceil(validation_fraction * rows)
 
 
@@ -138,7 +127,6 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         batch_size: int,
         learning_rate: float,
         device: str,
-        compiler: CompilerBackend = CompilerBackend.INDUCTOR,
         learning_schedule: LearningSchedule | None = None,
         early_stopping: EarlyStopping | None = None,
     ) -> None:
@@ -146,7 +134,6 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.device = device
-        self.compiler = compiler
         self.learning_schedule = learning_schedule
         self.early_stopping = early_stopping
 

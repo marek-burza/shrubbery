@@ -9,7 +9,6 @@ import requests
 import scipy
 from numerai_tools.scoring import numerai_corr
 from pandas.api.typing import DataFrameGroupBy
-from sklearn.metrics import mean_squared_error
 
 from shrubbery.constants import (
     COLUMN_ERA,
@@ -22,11 +21,6 @@ from shrubbery.observability import logger
 from shrubbery.utilities import save_prediction
 
 # Note: In case multiple scores are of interest, see: https://stackoverflow.com/questions/35876508/evaluate-multiple-scores-on-sklearn-cross-val-score & https://scikit-learn.org/stable/modules/grid_search.html#composite-grid-search  # noqa: E501
-
-
-def _unif(df: pd.DataFrame) -> pd.Series:
-    x = (df.rank(method='first') - 0.5) / len(df)
-    return pd.Series(x, index=df.index)
 
 
 def _calculate_validation_correlations(
@@ -196,18 +190,6 @@ class FeatureNeutralCorrelation:
             0, 1
         ]
         return fnc
-
-
-# TODO: Unused due to OOM - check if it happens after reboot
-# MSE
-# greater_is_better: False
-class MSE:
-    __name__ = 'MSE'
-
-    def __call__(
-        self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
-    ) -> float:
-        return mean_squared_error(y_true, y_pred)
 
 
 # Composite metric defined by a formula over named sub-metrics
