@@ -1,12 +1,13 @@
 import gc
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, RegressorMixin
 
 from shrubbery.constants import COLUMN_INDEX_TARGET
 from shrubbery.evaluation import METRIC_PREDICTION_VALUE, validation_metrics
+from shrubbery.metrics import Metric
 from shrubbery.mixer import mix_combinatorial, mix_predictions
 from shrubbery.observability import logger
 from shrubbery.utilities import PrintableModelMixin, model_to_string
@@ -26,15 +27,14 @@ class CombinatorialEnsembler(
     def __init__(
         self,
         estimators: list[EstimatorConfig],
-        ensemble_metric_function: Callable,
-        ensemble_metric_greater_is_better: bool,
+        ensemble_metric_function: Metric,
         mix_combinatorial_cap: int | None,
         cv: Any,
     ) -> None:
         self.estimators = estimators
         self.ensemble_metric_function = ensemble_metric_function
         self.ensemble_metric_greater_is_better = (
-            ensemble_metric_greater_is_better
+            ensemble_metric_function.greater_is_better
         )
         self.mix_combinatorial_cap = mix_combinatorial_cap
         self.cv = cv

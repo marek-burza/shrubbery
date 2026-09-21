@@ -1,6 +1,6 @@
 import time
 from collections.abc import Callable
-from typing import cast
+from typing import Protocol, cast
 
 import numexpr
 import numpy as np
@@ -72,10 +72,19 @@ def _get_validation_data_grouped(
     )
 
 
+class Metric(Protocol):
+    __name__: str
+    greater_is_better: bool
+
+    def __call__(
+        self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
+    ) -> float: ...
+
+
 # Numerai-specific sharpe ratio scorer
-# greater_is_better: True
 class PerEraSharpe:
     __name__ = 'Sharpe'
+    greater_is_better = True
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
@@ -94,9 +103,9 @@ class PerEraSharpe:
 # (running validation on the training dataset).
 # The leakage happens because embedders are trained on the entire training set
 # and only CombinatorialEnsembler splits off a hold-out set.
-# greater_is_better: True
 class PerEraMaxDrawdown:
     __name__ = 'Max Drawdown'
+    greater_is_better = True
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
@@ -120,9 +129,9 @@ class PerEraMaxDrawdown:
 # (running validation on the training dataset).
 # The leakage happens because embedders are trained on the entire training set
 # and only CombinatorialEnsembler splits off a hold-out set.
-# greater_is_better: True
 class PerEraMaxAPY:
     __name__ = 'APY'
+    greater_is_better = True
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
@@ -145,9 +154,9 @@ class PerEraMaxAPY:
 
 # TODO: Max Feature Exposure causes: RuntimeWarning: invalid value encountered in divide
 # Max Feature Exposure
-# greater_is_better: False
 class MaxFeatureExposure:
     __name__ = 'Max Feature Exposure'
+    greater_is_better = False
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
@@ -173,9 +182,9 @@ class MaxFeatureExposure:
 
 # Feature Neutral Correlation
 # https://docs.numer.ai/numerai-tournament/scoring/feature-neutral-correlation
-# greater_is_better: True
 class FeatureNeutralCorrelation:
     __name__ = 'FNC'
+    greater_is_better = True
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray
@@ -196,9 +205,15 @@ class FeatureNeutralCorrelation:
 class CompositeMetric:
     __name__ = 'Composite'
 
-    def __init__(self, variables: dict[str, Callable], formula: str) -> None:
+    def __init__(
+        self,
+        variables: dict[str, Callable],
+        formula: str,
+        greater_is_better: bool,
+    ) -> None:
         self.variables = variables
         self.formula = formula
+        self.greater_is_better = greater_is_better
 
     def __call__(
         self, x: np.ndarray, y_true: np.ndarray, y_pred: np.ndarray

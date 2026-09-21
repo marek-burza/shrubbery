@@ -3,6 +3,7 @@ from typing import Any, Callable
 import numpy as np
 
 from shrubbery.constants import COLUMN_INDEX_TARGET
+from shrubbery.metrics import Metric
 from shrubbery.observability import logger
 
 METRIC_PREDICTION_ID = 'Prediction ID'
@@ -16,11 +17,10 @@ METRIC_PREDICTION_VALUE = 'Metric'
 class NumeraiScorer:
     def __init__(
         self,
-        metric: Callable,
-        greater_is_better: bool,
+        metric: Metric,
     ) -> None:
         self.metric = metric
-        self.greater_is_better = greater_is_better
+        self.greater_is_better = metric.greater_is_better
         if hasattr(metric, '__name__'):
             self.__name__ = metric.__name__
         elif hasattr(metric, '__class__'):
@@ -39,13 +39,6 @@ class NumeraiScorer:
 
     def __str__(self) -> str:
         return str(self.__name__)
-
-
-def numerai_scorer(
-    metric: Callable,
-    greater_is_better: bool,
-) -> Callable:
-    return NumeraiScorer(metric=metric, greater_is_better=greater_is_better)
 
 
 def validation_metrics(
