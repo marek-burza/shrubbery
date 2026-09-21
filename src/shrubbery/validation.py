@@ -15,15 +15,15 @@ from shrubbery.observability import logger
 # * https://github.com/scikit-learn/scikit-learn/blob/8c9c1f27b/sklearn/model_selection/_split.py#L469  # noqa: E501
 class NumeraiTimeSeriesSplitter(BaseCrossValidator):
     def __init__(self, cv: int, embargo: int) -> None:
-        self._cv = cv
-        self._embargo = embargo
+        self.cv = cv
+        self.embargo = embargo
 
     def get_n_splits(
         self, x: np.ndarray, y: np.ndarray, groups: Any = None
     ) -> int:  # ty: ignore[invalid-method-override]
         # See also:
         # - https://scikit-learn.org/stable/glossary.html#term-get_n_splits
-        return self._cv
+        return self.cv
 
     def split(
         self, x: np.ndarray, y: np.ndarray, groups: Any = None
@@ -36,14 +36,14 @@ class NumeraiTimeSeriesSplitter(BaseCrossValidator):
 
         eras = x[:, COLUMN_INDEX_ERA]
         all_train_eras = np.unique(eras)
-        len_split = len(all_train_eras) // self._cv
+        len_split = len(all_train_eras) // self.cv
         test_splits = [
             all_train_eras[i * len_split : (i + 1) * len_split]
-            for i in range(self._cv)
+            for i in range(self.cv)
         ]
         # Fix the last test split to have all the last eras,
         # in case the number of eras wasn't divisible by cv
-        remainder = len(all_train_eras) % self._cv
+        remainder = len(all_train_eras) % self.cv
         if remainder != 0:
             test_splits[-1] = np.append(
                 test_splits[-1], all_train_eras[-remainder:]
@@ -67,8 +67,8 @@ class NumeraiTimeSeriesSplitter(BaseCrossValidator):
             train_split = [
                 e
                 for e in train_split_not_embargoed
-                if abs(int(e) - test_split_max) > self._embargo
-                and abs(int(e) - test_split_min) > self._embargo
+                if abs(int(e) - test_split_max) > self.embargo
+                and abs(int(e) - test_split_min) > self.embargo
             ]
             train_splits.append(train_split)
 

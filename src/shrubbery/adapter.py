@@ -98,7 +98,7 @@ class EarlyStopping:
 
 class EarlyStoppingState:
     def __init__(self, config: EarlyStopping) -> None:
-        self._config = config
+        self.config = config
         self._best_loss = float('inf')
         self._epochs_without_improvement = 0
 
@@ -108,7 +108,7 @@ class EarlyStoppingState:
         validation_loss: float,
     ) -> bool:
         """Update state; returns True when training should stop."""
-        config = self._config
+        config = self.config
         if validation_loss < self._best_loss - config.min_delta:
             self._best_loss = validation_loss
             self._epochs_without_improvement = 0
