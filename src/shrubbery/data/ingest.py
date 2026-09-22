@@ -72,8 +72,11 @@ def read_parquet_and_unpack(
     data[feature_cols] = (
         data[feature_cols].apply(lambda x: x / 4.0).astype(np.float32)
     )
+    current_era = napi.get_current_round()  # not quite the "current era"
     data_column_era = data[COLUMN_ERA]
-    data_column_era = np.where(data_column_era == 'X', np.nan, data_column_era)
+    data_column_era = np.where(
+        data_column_era == 'X', current_era, data_column_era
+    )
     data[COLUMN_ERA] = data_column_era.astype(np.float32)
     return data
 
