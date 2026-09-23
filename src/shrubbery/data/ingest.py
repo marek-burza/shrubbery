@@ -61,11 +61,8 @@ def get_feature_set(selected_feature_set: str) -> list[str]:
 
 
 def read_parquet_and_unpack(
-    file_name: str,
-    read_columns: list[str],
-    feature_cols: list[str],
-    era_override: float = np.inf,
-) -> tuple[pd.DataFrame, float]:
+    file_name: str, read_columns: list[str], feature_cols: list[str]
+) -> pd.DataFrame:
     logger.info(f'Reading {file_name}')
     data = pd.read_parquet(
         locate_numerai_file(file_name), columns=read_columns
@@ -77,10 +74,10 @@ def read_parquet_and_unpack(
     )
     data_column_era = data[COLUMN_ERA]
     data_column_era = np.where(
-        data_column_era == 'X', era_override, data_column_era
+        data_column_era == 'X', np.finfo(np.float32).max, data_column_era
     )
     data[COLUMN_ERA] = data_column_era.astype(np.float32)
-    return data, float(data[COLUMN_ERA].max())
+    return data
 
 
 def get_training_targets() -> list[str]:

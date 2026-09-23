@@ -68,17 +68,14 @@ class NumeraiRunner:
         targets = get_training_targets()
         read_columns = [COLUMN_ERA] + feature_cols + targets
 
-        training_data, training_era_max = read_parquet_and_unpack(
+        training_data = read_parquet_and_unpack(
             'train.parquet', read_columns, feature_cols
         )
-        validation_data, validation_era_max = read_parquet_and_unpack(
+        validation_data = read_parquet_and_unpack(
             'validation.parquet', read_columns, feature_cols
         )
-        live_data, _ = read_parquet_and_unpack(
-            'live.parquet',
-            read_columns,
-            feature_cols,
-            max(training_era_max, validation_era_max) + 1,
+        live_data = read_parquet_and_unpack(
+            'live.parquet', read_columns, feature_cols
         )
 
         # Check for nans and fill nans
