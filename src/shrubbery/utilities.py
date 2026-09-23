@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 
+from shrubbery.constants import COLUMN_PREDICTION
 from shrubbery.observability import logger
 
 MODEL_SUBDIRECTORY = 'models'
@@ -15,8 +16,8 @@ def save_prediction(df: pd.DataFrame, name: str) -> Path:
     stamp = datetime.now().strftime('%Y%m%d%H%M%S')
     name = f'{stamp}_{name}'
     old = df.columns.to_list()[0]
-    predictions = df.rank(pct=True).rename(columns={old: 'prediction'})
-    predictions = predictions['prediction']
+    predictions = df.rank(pct=True).rename(columns={old: COLUMN_PREDICTION})
+    predictions = predictions[COLUMN_PREDICTION]
     with NamedTemporaryFile(
         prefix=f'{name}_', suffix='.csv', delete=False
     ) as prediction_file:
