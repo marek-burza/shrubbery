@@ -215,13 +215,14 @@ class TorchEstimator(BaseEstimator, TransformerMixin, RegressorMixin):
         )
         self.serialized_model_.seek(0)
         model.eval().to(self._device)
-        torch.set_float32_matmul_precision('highest')
-        model = torch.compile(
-            model,
-            backend='inductor',
-            mode='max-autotune',
-            dynamic=True,
-        )
+        if self._device.type != 'cpu':
+            torch.set_float32_matmul_precision('highest')
+            model = torch.compile(
+                model,
+                backend='inductor',
+                mode='max-autotune',
+                dynamic=True,
+            )
         with torch.inference_mode():
             result = model(x_tensor)
         return result.cpu().numpy().squeeze()
