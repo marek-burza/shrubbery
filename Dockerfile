@@ -1,5 +1,5 @@
 # Sync NVIDIA Driver & CUDA versions (`nvidia-smi`)
-FROM nvidia/cuda:13.3.1-devel-ubuntu24.04
+FROM nvidia/cuda:13.4.1-devel-ubuntu24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
