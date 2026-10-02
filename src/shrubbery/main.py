@@ -14,6 +14,7 @@ import torch
 from shrubbery.constants import (
     COLUMN_ERA,
     COLUMN_ID,
+    COLUMN_PREDICTION,
     RANDOM_SEED,
 )
 from shrubbery.data.ingest import (
@@ -110,7 +111,7 @@ class NumeraiRunner:
         gc.collect()
 
         tournament_data = pd.DataFrame(live_data.index).set_index(COLUMN_ID)
-        tournament_data['predictions'] = self.estimator.predict(
+        tournament_data[COLUMN_PREDICTION] = self.estimator.predict(
             live_data[[COLUMN_ERA] + feature_cols].to_numpy()
         )
         gc.collect()
@@ -120,7 +121,7 @@ class NumeraiRunner:
             diagnostic_data = pd.DataFrame(validation_data.index).set_index(
                 COLUMN_ID
             )
-            diagnostic_data['predictions'] = self.estimator.predict(
+            diagnostic_data[COLUMN_PREDICTION] = self.estimator.predict(
                 validation_data[[COLUMN_ERA] + feature_cols].to_numpy()
             )
             gc.collect()

@@ -3,6 +3,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
+from shrubbery.constants import COLUMN_PREDICTION
 from shrubbery.evaluation import METRIC_PREDICTION_ID, validation_metrics
 from shrubbery.observability import logger
 
@@ -110,10 +111,10 @@ def mix_combinatorial(
             for item in validation_stats
         }
         ranking = pd.DataFrame(
-            lut.items(), columns=pd.Series(['Prediction', sort_by])
+            lut.items(), columns=pd.Series([COLUMN_PREDICTION, sort_by])
         ).sort_values(by=sort_by, ascending=sort_ascending)
         logger.info(
-            f'Highest ranked {ranking.iloc[0]["Prediction"]}: {ranking.iloc[0][sort_by]}'
+            f'Highest ranked {ranking.iloc[0][COLUMN_PREDICTION]}: {ranking.iloc[0][sort_by]}'
         )
     top = top_mix(lut, sort_ascending)
     if top:
