@@ -5,7 +5,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from shrubbery.constants import COLUMN_ERA
 from shrubbery.napi import napi
 from shrubbery.observability import logger
 
@@ -70,33 +69,6 @@ def read_numerai_parquet(
     return pd.read_parquet(
         locate_numerai_file(file_name), columns=read_columns
     )
-
-
-def unpack_numerai_features(
-    data: pd.DataFrame, feature_names: list[str]
-) -> np.ndarray:
-    # For more information about int8 encoding, see:
-    # https://forum.numer.ai/t/rain-data-release/6657
-    features = data[feature_names].to_numpy(dtype=np.float32, na_value=np.nan)
-    features /= 4.0
-    nans_per_col = np.isnan(features).sum(axis=0)
-    logger.info('Checking for nans in the features')
-    if nans_per_col.any():
-        nans_per_col_count = {
-            name: int(count)
-            for name, count in zip(feature_names, nans_per_col)
-            if count > 0
-        }
-        logger.info(f'Number of nans per column: {nans_per_col_count}')
-        logger.info(f'Out of {features.shape[0]} total rows')
-        logger.info('Filling nans with 0.5')
-        np.nan_to_num(features, copy=False, nan=0.5)
-    else:
-        logger.info('No nans in the features!')
-    eras = np.where(
-        data[COLUMN_ERA] == 'X', np.finfo(np.float32).max, data[COLUMN_ERA]
-    ).astype(np.float32)
-    return np.column_stack((eras, features))
 
 
 def get_training_targets() -> list[str]:
