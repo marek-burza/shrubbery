@@ -42,7 +42,7 @@ def run_docker(arguments: argparse.Namespace) -> None:
         '-e',
         f'NUMERAI_MODEL={arguments.model}',
         '-e',
-        f'NUMERAI_MODEL_PATH=workspace/models/model_{arguments.model}.pkl.zip',
+        f'NUMERAI_MODEL_PATH=workspace/models/model_{arguments.model}.pkl',
         '-v',
         f'{os.getcwd()}/{arguments.model}.py:/app/model.py',
     ]

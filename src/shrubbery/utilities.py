@@ -27,7 +27,7 @@ def save_prediction(df: pd.DataFrame, name: str) -> Path:
 
 
 def store_model(model: Any, model_file: Path) -> None:
-    pd.to_pickle(model, model_file, compression={'method': 'zip'})
+    pd.to_pickle(model, model_file)
     logger.info(f'Stored model: {model_to_string(model)}')
 
 
