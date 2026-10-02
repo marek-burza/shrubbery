@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
+import cloudpickle
 import pandas as pd
 
 from shrubbery.constants import COLUMN_PREDICTION
@@ -27,13 +28,15 @@ def save_prediction(df: pd.DataFrame, name: str) -> Path:
 
 
 def store_model(model: Any, model_file: Path) -> None:
-    pd.to_pickle(model, model_file)
+    with model_file.open('wb') as file:
+        cloudpickle.dump(model, file)
     logger.info(f'Stored model: {model_to_string(model)}')
 
 
 def load_model(model_file: Path) -> Any:
     if model_file.is_file():
-        model = pd.read_pickle(model_file)
+        with model_file.open('rb') as file:
+            model = cloudpickle.load(file)
         logger.info(f'Loaded model: {model_to_string(model)}')
     else:
         logger.error('Model failed to materialize')
