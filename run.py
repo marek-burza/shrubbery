@@ -31,7 +31,7 @@ def run_docker(arguments: argparse.Namespace) -> None:
         '-it',
         '--device',
         'nvidia.com/gpu=all',
-        '--shm-size=16g',
+        f'--shm-size={os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")}',
         '--userns=keep-id',
         '-v',
         f'{os.getcwd()}:/w',

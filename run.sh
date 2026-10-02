@@ -9,6 +9,7 @@ podman run \
   --network host \
   --userns=keep-id \
   --device nvidia.com/gpu=all \
+  --shm-size=$(free -b | awk '/^Mem:/{print $2}') \
   -e PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native \
   -e PIPEWIRE_REMOTE=/run/user/$(id -u)/pipewire-0 \
   -v /run/user/$(id -u)/pulse/native:/run/user/$(id -u)/pulse/native \
