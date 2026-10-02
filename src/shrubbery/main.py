@@ -8,22 +8,17 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import torch
 
-from shrubbery.constants import (
-    COLUMN_ERA,
-    COLUMN_ID,
-    COLUMN_PREDICTION,
-    RANDOM_SEED,
-)
+from shrubbery.constants import COLUMN_ERA, RANDOM_SEED
 from shrubbery.data.ingest import (
     download_numerai_files,
     get_feature_set,
     get_training_targets,
-    read_parquet_and_unpack,
+    read_numerai_parquet,
 )
 from shrubbery.metrics import submit_diagnostic_predictions
+from shrubbery.model import NumeraiModel
 from shrubbery.napi import napi
 from shrubbery.observability import logger, silence_false_positive_warnings
 from shrubbery.tournament import submit_tournament_predictions
@@ -65,68 +60,49 @@ class NumeraiRunner:
         logger.info(f'Model Name: {self.numerai_model_id}')
         logger.info(f'Notes: {self.notes}')
         download_numerai_files()
-        feature_cols = get_feature_set(self.feature_set_name)
-        targets = get_training_targets()
-        read_columns = [COLUMN_ERA] + feature_cols + targets
-
-        training_data = read_parquet_and_unpack(
-            'train.parquet', read_columns, feature_cols
-        )
-        validation_data = read_parquet_and_unpack(
-            'validation.parquet', read_columns, feature_cols
-        )
-        live_data = read_parquet_and_unpack(
-            'live.parquet', read_columns, feature_cols
-        )
-
-        # Check for nans and fill nans
-        nans_per_col = live_data[feature_cols].isna().sum()
-        logger.info('Checking for nans in the tournament data')
-        if nans_per_col.any():
-            total_rows = live_data.shape[0]
-            nans_per_col_count = nans_per_col[nans_per_col > 0]
-            logger.info(
-                f'Number of nans per column this week: {nans_per_col_count}'
-            )
-            logger.info(f'Out of {total_rows} total rows')
-            logger.info('Filling nans with 0.5')
-            live_data.loc[:, feature_cols] = live_data.loc[
-                :, feature_cols
-            ].fillna(0.5)
-        else:
-            logger.info('No nans in the features this week!')
-        # Load model if present
+        feature_names = get_feature_set(self.feature_set_name)
+        target_names = get_training_targets()
         model_name = f'model_{self.numerai_model_id}'
         model_file = Path(os.environ['NUMERAI_MODEL_PATH'])
-        model = None if self.retrain else load_model(model_file)
-        if model is None:
+        estimator = None if self.retrain else load_model(model_file)
+        if estimator is None:
             logger.info(f'Training model: {model_name}')
-            self.estimator = self.estimator.fit(
-                training_data[[COLUMN_ERA] + feature_cols].to_numpy(),
-                training_data[targets].to_numpy(),
+            model = NumeraiModel(
+                self.estimator, feature_names, target_names
+            ).fit(
+                read_numerai_parquet(
+                    'train.parquet',
+                    [COLUMN_ERA, *feature_names, *target_names],
+                ),
+                read_numerai_parquet('train_benchmark_models.parquet'),
             )
-            store_model(self.estimator, model_file)
+            store_model(model.estimator, model_file)
         else:
-            self.estimator = model
+            model = NumeraiModel(estimator, feature_names, target_names)
         gc.collect()
 
-        tournament_data = pd.DataFrame(live_data.index).set_index(COLUMN_ID)
-        tournament_data[COLUMN_PREDICTION] = self.estimator.predict(
-            live_data[[COLUMN_ERA] + feature_cols].to_numpy()
+        submit_tournament_predictions(
+            model(
+                read_numerai_parquet(
+                    'live.parquet', [COLUMN_ERA, *feature_names]
+                ),
+                read_numerai_parquet('live_benchmark_models.parquet'),
+            ),
+            self.numerai_model_id,
         )
         gc.collect()
-        submit_tournament_predictions(tournament_data, self.numerai_model_id)
 
         try:
-            diagnostic_data = pd.DataFrame(validation_data.index).set_index(
-                COLUMN_ID
-            )
-            diagnostic_data[COLUMN_PREDICTION] = self.estimator.predict(
-                validation_data[[COLUMN_ERA] + feature_cols].to_numpy()
-            )
-            gc.collect()
             submit_diagnostic_predictions(
-                diagnostic_data, self.numerai_model_id
+                model.predict(
+                    read_numerai_parquet(
+                        'validation.parquet', [COLUMN_ERA, *feature_names]
+                    ),
+                    read_numerai_parquet(
+                        'validation_benchmark_models.parquet'
+                    ),
+                ),
+                self.numerai_model_id,
             )
         except MemoryError:
             traceback.print_exc()

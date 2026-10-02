@@ -40,6 +40,9 @@ def download_numerai_files():
         'train.parquet',
         'validation.parquet',
         'live.parquet',
+        'train_benchmark_models.parquet',
+        'validation_benchmark_models.parquet',
+        'live_benchmark_models.parquet',
         'features.json',
     ]:
         download_file(file_name)
@@ -60,24 +63,40 @@ def get_feature_set(selected_feature_set: str) -> list[str]:
     return sorted(features)
 
 
-def read_parquet_and_unpack(
-    file_name: str, read_columns: list[str], feature_cols: list[str]
+def read_numerai_parquet(
+    file_name: str, read_columns: list[str] | None = None
 ) -> pd.DataFrame:
     logger.info(f'Reading {file_name}')
-    data = pd.read_parquet(
+    return pd.read_parquet(
         locate_numerai_file(file_name), columns=read_columns
     )
+
+
+def unpack_numerai_features(
+    data: pd.DataFrame, feature_names: list[str]
+) -> np.ndarray:
     # For more information about int8 encoding, see:
     # https://forum.numer.ai/t/rain-data-release/6657
-    data[feature_cols] = (
-        data[feature_cols].apply(lambda x: x / 4.0).astype(np.float32)
-    )
-    data_column_era = data[COLUMN_ERA]
-    data_column_era = np.where(
-        data_column_era == 'X', np.finfo(np.float32).max, data_column_era
-    )
-    data[COLUMN_ERA] = data_column_era.astype(np.float32)
-    return data
+    features = data[feature_names].to_numpy(dtype=np.float32, na_value=np.nan)
+    features /= 4.0
+    nans_per_col = np.isnan(features).sum(axis=0)
+    logger.info('Checking for nans in the features')
+    if nans_per_col.any():
+        nans_per_col_count = {
+            name: int(count)
+            for name, count in zip(feature_names, nans_per_col)
+            if count > 0
+        }
+        logger.info(f'Number of nans per column: {nans_per_col_count}')
+        logger.info(f'Out of {features.shape[0]} total rows')
+        logger.info('Filling nans with 0.5')
+        np.nan_to_num(features, copy=False, nan=0.5)
+    else:
+        logger.info('No nans in the features!')
+    eras = np.where(
+        data[COLUMN_ERA] == 'X', np.finfo(np.float32).max, data[COLUMN_ERA]
+    ).astype(np.float32)
+    return np.column_stack((eras, features))
 
 
 def get_training_targets() -> list[str]:
