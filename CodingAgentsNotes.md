@@ -95,6 +95,11 @@ mkdir -p ~/.claude/skills/fastapi
 cp -r /tmp/fastapi/fastapi/.agents/skills/fastapi ~/.claude/skills/fastapi
 ```
 
+# You Should Know
+```shell
+claude plugin enable cc-plugin-you-should-know@builtin --scope local
+```
+
 ## Running Local Models
 
 ### `llama.cpp`
