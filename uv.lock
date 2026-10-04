@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'linux'",
@@ -2452,6 +2452,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "sklearn-genetic-opt" },
+    { name = "tabulate" },
     { name = "torch" },
     { name = "tqdm" },
     { name = "typer" },
@@ -2488,6 +2489,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "sklearn-genetic-opt", specifier = ">=0.13.3" },
+    { name = "tabulate", specifier = ">=0.10.0" },
     { name = "torch", specifier = ">=2.14.0", index = "https://download.pytorch.org/whl/cu132" },
     { name = "tqdm", specifier = ">=4.70.1" },
     { name = "typer", specifier = ">=0.20.0" },
