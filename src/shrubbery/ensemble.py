@@ -24,12 +24,17 @@ class EstimatorConfig:
 class CombinatorialEnsembler(
     BaseEstimator, MetaEstimatorMixin, RegressorMixin, PrintableModelMixin
 ):
+    # Class-level default keeps models pickled before refit existed loadable
+    # (get_params, called when logging a loaded model, reads every parameter)
+    refit = False
+
     def __init__(
         self,
         estimators: list[EstimatorConfig],
         ensemble_metric_function: Metric,
         mix_combinatorial_cap: int | None,
         cv: Any,
+        refit: bool = False,
     ) -> None:
         self.estimators = estimators
         self.ensemble_metric_function = ensemble_metric_function
@@ -38,6 +43,7 @@ class CombinatorialEnsembler(
         )
         self.mix_combinatorial_cap = mix_combinatorial_cap
         self.cv = cv
+        self.refit = refit
         self.estimator_names_best_ = [config.name for config in estimators]
 
     def fit(
@@ -98,7 +104,18 @@ class CombinatorialEnsembler(
         if best:
             logger.info(f'Ensemble with highest score: {best}')
             self.estimator_names_best_ = best
+        if self.refit:
+            self._refit_best(x, y)
         return self
+
+    def _refit_best(self, x: np.ndarray, y: np.ndarray) -> None:
+        for config in self.estimators:
+            if config.name in self.estimator_names_best_:
+                logger.info(
+                    f'Refitting ensemble model on all data: {config.name}'
+                )
+                config.estimator = config.estimator.fit(x, y)
+                gc.collect()
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         predictions: dict[str, np.ndarray] = {}
