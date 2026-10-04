@@ -22,4 +22,17 @@ def numerai_models() -> list[str]:
     return list(napi.get_models().keys())
 
 
+def resolve_numerai_model_id(model_name: str) -> str:
+    try:
+        account_models = napi.get_models()
+    except Exception:
+        account_models = {}
+    if model_name in account_models:
+        return account_models[model_name]
+    profile = napi.public_user_profile(model_name)
+    if not profile:
+        raise ValueError(f'Unknown Numerai model: {model_name}')
+    return profile['id']
+
+
 napi = numerai_api()

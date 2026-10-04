@@ -16,7 +16,7 @@ from shrubbery.constants import (
     COLUMN_Y_PRED,
     COLUMN_Y_TRUE,
 )
-from shrubbery.napi import napi
+from shrubbery.napi import napi, resolve_numerai_model_id
 from shrubbery.observability import logger
 from shrubbery.utilities import save_prediction
 
@@ -230,7 +230,7 @@ def submit_diagnostic_predictions(
 ) -> dict[str, float]:
     prediction_name = 'validation'
     prediction_path = save_prediction(prediction_data, prediction_name)
-    model_id = napi.get_models()[numerai_model_id]
+    model_id = resolve_numerai_model_id(numerai_model_id)
     for _ in range(3):
         diagnostics_ids = []
         # Upload validation prediction (Scores -> Models -> Run Diagnostics)

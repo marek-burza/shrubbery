@@ -67,6 +67,10 @@ uv run python example.py --retrain
 
 You can see an example use of the package in `example.py`.
 
+## Tools
+
+- `numerai-scores` (`src/shrubbery/numerai/scores.py`) - fetches live tournament scores (CORR20v2, MMC, BMC, CORR60, MMC60, ... with percentiles) of own or public models from the Numerai API for performance evaluation; JSON records on stdout by default (CSV and table optional), with filtering and per-model summary options. Run `uv run numerai-scores --help` for metric definitions, payout history, interpretation caveats and examples.
+
 ## Environment Variables (`.env`)
 
 To run the code create `.env` script which sets the necessary environment variables:

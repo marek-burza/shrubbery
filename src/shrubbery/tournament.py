@@ -3,7 +3,7 @@ import time
 import pandas as pd
 import requests
 
-from shrubbery.napi import napi
+from shrubbery.napi import napi, resolve_numerai_model_id
 from shrubbery.observability import logger
 from shrubbery.utilities import save_prediction
 
@@ -14,7 +14,7 @@ def submit_tournament_predictions(
     pred_col = df.columns.to_list()[0]
     prediction_path = save_prediction(df, f'tournament_{pred_col}')
     # Upload validation prediction (Submissions -> Models -> Upload Submission)
-    model_id = napi.get_models()[numerai_model_id]
+    model_id = resolve_numerai_model_id(numerai_model_id)
     while True:
         try:
             logger.info('Submitting tournament predictions')
@@ -39,20 +39,3 @@ def submit_tournament_predictions(
             if 'Are you using the latest live ids' in str(error):
                 break
             time.sleep(10)
-
-
-def get_performances(numerai_model_id: str) -> pd.DataFrame:
-    model_id = napi.get_models()[numerai_model_id]
-    performances = pd.DataFrame(
-        napi.round_model_performances_v2(model_id=model_id)
-    )
-    submission_scores = pd.json_normalize(
-        performances['submissionScores'].apply(
-            lambda scores: (
-                {}
-                if scores is None
-                else {score['displayName']: score['value'] for score in scores}
-            )
-        )
-    )
-    return performances.join(submission_scores)
