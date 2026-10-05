@@ -5,7 +5,7 @@
 - `Shift + TAB, Shift TAB` - cycle through modes to enter planning mode
 - `/memory` - with this prefix, the instruction will be memorized in `CLAUDE.md` ([AGENTS.md](https://agents.md))
 - `/init` - to create `CLAUDE.md` (optionally, append and provide more instructions and request it to "ultrathink")
-- `Esc, Esc` - to rewind the conversation to before an unrelated side-quest or a mistake in instruction
+- `/rewind`, `Esc, Esc` (on empty line) - to rewind the conversation to before an unrelated side-quest or a mistake in instruction
 - `/compact` - to retain knowledge gathered but not the minutia (e.g. to start on a similar task)
 - Create `.claude/commands/[name].md` with instructions for a new `/name` command (use `$ARGUMENTS` to insert subject into generic instruction and `/project:name arguments` to execute)
 - `claude mcp add ...` - MCP!
