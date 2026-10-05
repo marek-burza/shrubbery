@@ -138,8 +138,8 @@ def main_arguments() -> argparse.Namespace:
 
 def main() -> None:
     arguments = main_arguments()
-    model_path = Path(f'{arguments.model}.py')
-    name_space = runpy.run_path(str(model_path), run_name=arguments.model)
+    model_path = f'{arguments.model}.py'
+    name_space = runpy.run_path(model_path, run_name=arguments.model)
     NumeraiRunner(
         notes=arguments.model,
         numerai_model_id=arguments.model,
