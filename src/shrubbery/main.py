@@ -1,6 +1,7 @@
 import argparse
 import gc
 import os
+import runpy
 import subprocess
 import sys
 import traceback
@@ -111,6 +112,12 @@ class NumeraiRunner:
 def main_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Shrubbery')
     parser.add_argument(
+        '--model',
+        type=str,
+        default=os.environ['NUMERAI_MODEL'],
+        help='Name of the model',
+    )
+    parser.add_argument(
         '--retrain', action='store_true', help='Use this flag to retrain'
     )
     parser.add_argument(
@@ -127,3 +134,22 @@ def main_arguments() -> argparse.Namespace:
         subprocess.run('/bin/bash')
         sys.exit()
     return arguments
+
+
+def main() -> None:
+    arguments = main_arguments()
+    model_path = Path(f'{arguments.model}.py')
+    name_space = runpy.run_path(str(model_path), run_name=arguments.model)
+    NumeraiRunner(
+        notes=arguments.model,
+        numerai_model_id=arguments.model,
+        version='latest',
+        feature_set_name='small',
+        retrain=arguments.retrain,
+        deterministic=False,
+        estimator=name_space['ESTIMATOR'],
+    ).run()
+
+
+if __name__ == '__main__':
+    main()
