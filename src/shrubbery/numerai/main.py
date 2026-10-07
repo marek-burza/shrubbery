@@ -9,19 +9,24 @@ from typing import Any
 import numpy as np
 import torch
 
-from shrubbery.constants import COLUMN_ERA, RANDOM_SEED
-from shrubbery.data.ingest import (
+from shrubbery.numerai.constants import COLUMN_ERA, RANDOM_SEED
+from shrubbery.numerai.ingest import (
     download_numerai_files,
     get_feature_set,
     get_training_targets,
     read_numerai_parquet,
 )
-from shrubbery.metrics import submit_diagnostic_predictions
-from shrubbery.model import NumeraiModel
-from shrubbery.napi import napi
-from shrubbery.observability import logger, silence_false_positive_warnings
-from shrubbery.tournament import submit_tournament_predictions
-from shrubbery.utilities import load_model, store_model
+from shrubbery.numerai.model import NumeraiModel
+from shrubbery.numerai.napi import (
+    napi,
+    submit_diagnostic_predictions,
+    submit_tournament_predictions,
+)
+from shrubbery.numerai.observability import (
+    logger,
+    silence_false_positive_warnings,
+)
+from shrubbery.numerai.utilities import load_model, store_model
 
 
 class NumeraiRunner:

@@ -4,8 +4,8 @@ from typing import Any, Self
 import numpy as np
 import pandas as pd
 
-from shrubbery.constants import COLUMN_ERA, COLUMN_PREDICTION
-from shrubbery.observability import logger
+from shrubbery.numerai.constants import COLUMN_ERA, COLUMN_PREDICTION
+from shrubbery.numerai.observability import logger
 
 
 def unpack_numerai_features(

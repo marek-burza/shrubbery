@@ -19,20 +19,20 @@ Models are executed by the user in a Docker container via shrubbery's `run.py`:
 
 ```bash
 # Run model inference
-run.py -- example.py
+run.py --model <model>
 
 # Run model training
-run.py -- example.py --retrain
+run.py --model <model> --retrain
 ```
 
 Models are executed by the coding agent already inside the Docker container directly via `uv`:
 
 ```bash
 # Run model inference
-uv run python example.py
+numerai-run --model <model>
 
 # Run model training
-uv run python example.py --retrain
+numerai-run --model <model> --retrain
 ```
 
 **Linting**:
@@ -42,30 +42,30 @@ uv run python example.py --retrain
 
 ## Architecture
 
-### Core Pipeline (`src/shrubbery/`)
+### Numerai Pipeline (`src/shrubbery/numerai/`)
 
-**Entry point**: `main.py` - `NumeraiRunner` implements training harness for model pipeline: data download → feature selection → model training → tournament submission.
+**Entry point**: `main.py` - `numerai-run --model <model>` loads `ESTIMATOR` from `<model>.py` in the current directory and passes it to `NumeraiRunner`, which runs the pipeline: data download → feature selection → model training (with `--retrain`, otherwise the stored model is loaded) → tournament submission → validation diagnostics.
 
-**Data layer** (`data/`): `ingest.py` downloads/caches Numerai datasets. `augmentation.py` and `downsampling.py` handle data preprocessing.
+**Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `unpack_numerai_features` decodes the int8 features, fills NaNs and prepends the era as the first column.
 
-**Model universe** (`universe/`): Model wrappers (XGBoost, FNN, ResNet, Wide&Deep, TPOT, Factorization Machines) following scikit-learn's estimator interface.
+**Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
 
-**Embeddings** (`embeddings/`): Feature embedding strategies - Autoencoder, GAN, and a generic wrapper which concatenates features and embeddings.
+**Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, ranking and saving of predictions, and upload of tournament and diagnostic predictions with retries and back-off.
 
-**Key abstractions**:
-- `NumeraiNeutralization` (`neutralization.py`): scikit-learn compatible meta-estimator that applies feature exposure neutralization (reduces prediction correlation to risky features using pseudo-inverse techniques)
-- `NumeraiTimeSeriesSplitter` (`validation.py`): Era-aware CV splitter with embargo periods to prevent data leakage
-- `CombinatorialEnsembler` (`ensemble.py`): Multi-model combining via product-and-root or sum-and-rank methods
+**Persistence**: `utilities.py` stores and loads the trained estimator with cloudpickle.
+
+**Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters), `scores.py` (the `numerai-scores` tool, see Tools).
+
+### Financial Experiments (`src/shrubbery/financial/`)
+
+- `market_neutral.py`: removes the S&P 500 correlated component from a series and tests the remaining trend (`uv run python -m shrubbery.financial.market_neutral --help`)
+- `trader.py`: standalone uv script for VaR, beta and CAPM analysis of an asset against a market index via yfinance
 
 ### Key Design Patterns
 
-- All models follow **scikit-learn's BaseEstimator interface** for interoperability
-- Processing is **era-aware** - Numerai's time periods ("eras") are respected throughout splitting, evaluation, and neutralization
+- Model scripts define a module-level `ESTIMATOR` following **scikit-learn's estimator interface** (`fit`/`predict`); the harness owns data, training and submission
+- Processing is **era-aware**: the era reaches the estimator as the first feature column, so it can split, evaluate and neutralize per era
 - **GPU-first**: NVIDIA CUDA acceleration via cuML, XGBoost GPU, PyTorch
-
-### Simplified Model Example
-
-You can see an example use of the package in `example.py`.
 
 ## Tools
 
@@ -92,7 +92,7 @@ Profiling Compute:
 # From: https://developer.nvidia.com/nsight-systems/get-started
 curl -fsSL https://developer.nvidia.com/downloads/assets/tools/secure/nsight-systems/2026_2/NsightSystems-linux-cli-public-2026.2.1.210-3763964.deb -o NsightSystems-linux-cli-public-2026.2.1.210-3763964.deb
 sudo dpkg -i NsightSystems-linux-cli-public-2026.2.1.210-3763964.deb
-nsys profile -o trace --trace=cuda,nvtx,osrt uv run src/shrubbery/example.py --retrain
+nsys profile -o trace --trace=cuda,nvtx,osrt numerai-run --model <model> --retrain
 nsys export --type=perfetto --output=trace.pftrace trace.nsys-rep
 curl -fsSL https://raw.githubusercontent.com/chenyu-jiang/nsys2json/main/nsys2json.py -o nsys2json.py
 python3 nsys2json.py -f trace.sqlite -o trace.json
@@ -102,7 +102,7 @@ python3 nsys2json.py -f trace.sqlite -o trace.json
 Profiling Memory:
 
 ```shell
-uv run --with memray python -m memray run -o output.bin ../numerai/ails.py --retrain
+uv run --with memray python -m memray run -o output.bin -m shrubbery.numerai.main --model <model> --retrain
 uv run --with memray python -m memray flamegraph output.bin
 ```
 

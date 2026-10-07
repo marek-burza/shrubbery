@@ -8,8 +8,12 @@ from typing import Annotated
 import pandas as pd
 import typer
 
-from shrubbery.napi import napi, numerai_models, resolve_numerai_model_id
-from shrubbery.observability import logger
+from shrubbery.numerai.napi import (
+    napi,
+    numerai_models,
+    resolve_numerai_model_id,
+)
+from shrubbery.numerai.observability import logger
 
 HELP = """
 Fetch live tournament scores of Numerai models for performance evaluation.

@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from shrubbery.napi import napi
-from shrubbery.observability import logger
+from shrubbery.numerai.napi import napi
+from shrubbery.numerai.observability import logger
 
 
 def locate_numerai_file(file_name: str) -> Path:
