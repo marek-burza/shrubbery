@@ -51,11 +51,3 @@ def model_to_string(model: Any) -> str:
     model_parameters = model.get_params(deep=False)
     description = f'{model_name}; {model_parameters}'
     return description.replace(' ', '').replace('\n', '')
-
-
-class PrintableModelMixin:
-    def __str__(self) -> str:
-        return model_to_string(self)
-
-    def __repr__(self) -> str:
-        return model_to_string(self)
