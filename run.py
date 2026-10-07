@@ -12,11 +12,6 @@ def main() -> None:
         '--model',
         type=str,
     )
-    parser.add_argument(
-        '--local',
-        action=argparse.BooleanOptionalAction,
-        default=False,
-    )
     parser.add_argument('command', nargs=argparse.REMAINDER)
     arguments = parser.parse_args()
     run_docker(arguments)
@@ -45,16 +40,11 @@ def run_docker(arguments: argparse.Namespace) -> None:
         f'NUMERAI_MODEL_PATH=workspace/models/model_{arguments.model}.pkl',
         '-v',
         f'{os.getcwd()}/{arguments.model}.py:/app/model.py',
+        '--pull=always',
+        'ghcr.io/marek-burza/shrubbery:latest',
+        '-c',
+        f'"numerai-run --model {arguments.model}"',
     ]
-    if not arguments.local:
-        command.extend(
-            [
-                '--pull=always',
-                'ghcr.io/marek-burza/shrubbery:latest',
-            ]
-        )
-    else:
-        command.extend(['shrubbery'])
     command.extend(arguments.command[1:])
     command = ' '.join(command)
     Path('workspace/logs').mkdir(parents=True, exist_ok=True)
