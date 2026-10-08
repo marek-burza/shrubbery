@@ -44,15 +44,15 @@ numerai-run --model <model> --retrain
 
 ### Numerai Pipeline (`src/shrubbery/numerai/`)
 
-**Entry point**: `main.py` - `numerai-run --model <model>` loads `ESTIMATOR` from `<model>.py` in the current directory and passes it to `NumeraiRunner`, which runs the pipeline: data download → feature selection → model training (with `--retrain`, otherwise the stored model is loaded) → tournament submission → validation diagnostics.
+**Entry point**: `main.py` - `numerai-run --model <model>` hands the model name to `NumeraiRunner`, which derives both of its paths from it: the script `<model>.py` in the current directory and the artifact `workspace/models/model_<model>.pkl`. The two modes do not overlap. With `--retrain` it loads `ESTIMATOR` from the script, resolves the feature and target names, fits, and stores it as an artifact. Without `--retrain` it loads the artifact and never reads the script. Either way it then submits tournament predictions and validation diagnostics.
 
-**Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `unpack_numerai_features` decodes the int8 features, fills NaNs and prepends the era as the first column.
+**Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `unpack_numerai_features` decodes the int8 features and prepends the era as the first column.
 
 **Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
 
 **Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, ranking and saving of predictions, and upload of tournament and diagnostic predictions with retries and back-off.
 
-**Persistence**: `utilities.py` stores and loads the trained estimator with cloudpickle.
+**Persistence**: `utilities.py` stores and loads the `NumeraiModel` with cloudpickle, and refuses to load anything that is not a `NumeraiModel`. See Model Artifact.
 
 **Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters), `scores.py` (the `numerai-scores` tool, see Tools).
 

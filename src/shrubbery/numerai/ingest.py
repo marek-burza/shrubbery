@@ -5,12 +5,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from shrubbery.numerai.constants import SUBDIRECTORY_DATA
 from shrubbery.numerai.napi import napi
 from shrubbery.numerai.observability import logger
 
 
 def locate_numerai_file(file_name: str) -> Path:
-    data_directory_path = Path('./workspace') / 'data'
+    data_directory_path = Path('./workspace') / SUBDIRECTORY_DATA
     data_directory_path.mkdir(parents=True, exist_ok=True)
     file_path = data_directory_path / file_name
     return file_path
@@ -32,15 +33,15 @@ def log_all_dataset_entries() -> None:
         logger.info(f'Dataset list entry #{str(i).zfill(digits)}: {file_name}')
 
 
-def download_numerai_files():
+def download_numerai_files() -> None:
     log_all_dataset_entries()
     logger.info('Downloading dataset files...')
     for file_name in [
         'train.parquet',
-        'validation.parquet',
-        'live.parquet',
         'train_benchmark_models.parquet',
+        'validation.parquet',
         'validation_benchmark_models.parquet',
+        'live.parquet',
         'live_benchmark_models.parquet',
         'features.json',
     ]:

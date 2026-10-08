@@ -19,6 +19,9 @@ def main() -> None:
 
 def run_docker(arguments: argparse.Namespace) -> None:
     base = Path(__file__).parent
+    extra_arguments = [
+        argument for argument in arguments.command if argument != '--'
+    ]
     command = [
         'podman',
         'run',
@@ -36,16 +39,11 @@ def run_docker(arguments: argparse.Namespace) -> None:
         f'{base / ".env"}',
         '-e',
         f'NUMERAI_MODEL={arguments.model}',
-        '-e',
-        f'NUMERAI_MODEL_PATH=workspace/models/model_{arguments.model}.pkl',
-        '-v',
-        f'{os.getcwd()}/{arguments.model}.py:/app/model.py',
         '--pull=always',
         'ghcr.io/marek-burza/shrubbery:latest',
         '-c',
-        f'"numerai-run --model {arguments.model}"',
+        f'"numerai-run --model {arguments.model} {" ".join(extra_arguments)}"',
     ]
-    command.extend(arguments.command[1:])
     command = ' '.join(command)
     Path('workspace/logs').mkdir(parents=True, exist_ok=True)
     command += ' 2>&1 > workspace/logs/$(date +%Y%m%d%H%M%S).log'

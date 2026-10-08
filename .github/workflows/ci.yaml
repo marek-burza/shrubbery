@@ -16,6 +16,9 @@ jobs:
       - name: Linting
         run: |
           /bin/sh .github/workflows/linter.sh
+      - name: Testing
+        run: |
+          uv run pytest tests
       - name: Tags
         id: tags
         run: |
