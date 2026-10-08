@@ -42,12 +42,9 @@ def resolve_numerai_model_id(model_name: str) -> str:
 
 
 def save_prediction(df: pd.DataFrame, name: str) -> Path:
-    # Rank from 0 to 1 to meet diagnostic/submission file requirements
     stamp = datetime.now().strftime('%Y%m%d%H%M%S')
     name = f'{stamp}_{name}'
-    old = df.columns.to_list()[0]
-    predictions = df.rank(pct=True).rename(columns={old: COLUMN_PREDICTION})
-    predictions = predictions[COLUMN_PREDICTION]
+    predictions = df[COLUMN_PREDICTION]
     with NamedTemporaryFile(
         prefix=f'{name}_', suffix='.csv', delete=False
     ) as prediction_file:
@@ -114,8 +111,7 @@ def submit_diagnostic_predictions(
 def submit_tournament_predictions(
     df: pd.DataFrame, numerai_model_id: str
 ) -> None:
-    pred_col = df.columns.to_list()[0]
-    prediction_path = save_prediction(df, f'tournament_{pred_col}')
+    prediction_path = save_prediction(df, f'tournament_{COLUMN_PREDICTION}')
     # Upload validation prediction (Submissions -> Models -> Upload Submission)
     model_id = resolve_numerai_model_id(numerai_model_id)
     while True:

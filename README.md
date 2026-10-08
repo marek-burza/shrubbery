@@ -50,9 +50,9 @@ numerai-run --model <model> --retrain
 
 **Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
 
-**Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, ranking and saving of predictions, and upload of tournament and diagnostic predictions with retries and back-off.
+**Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, saving of predictions to CSV as the estimator produced them, and upload of tournament and diagnostic predictions with retries and back-off.
 
-**Persistence**: `utilities.py` stores and loads the `NumeraiModel` with cloudpickle, and refuses to load anything that is not a `NumeraiModel`. See Model Artifact.
+**Persistence**: `utilities.py` stores and loads the `NumeraiModel` with cloudpickle, registering every loaded `shrubbery.*` module for by-value pickling so the artifact carries its code rather than import paths, and refuses to load anything that is not a `NumeraiModel`.
 
 **Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters), `scores.py` (the `numerai-scores` tool, see Tools).
 
@@ -64,6 +64,7 @@ numerai-run --model <model> --retrain
 ### Key Design Patterns
 
 - Model scripts define a module-level `ESTIMATOR` following **scikit-learn's estimator interface** (`fit`/`predict`); the harness owns data, training and submission
+- **The estimator owns the prediction range.** Numerai validates an upload as: exactly a `pd.DataFrame`, non-empty, no NaN anywhere, and every value of the first column within `[0, 1]` inclusive, indexed by the ids of the live data with the column named `prediction`. `NumeraiModel` guarantees the type, the single `prediction` column and the index; the range and the absence of NaN come from the estimator alone. Nothing downstream re-ranks or clips, so an `ESTIMATOR` that does not end in a per-era `rank(pct=True)` produces an artifact Numerai rejects, and the rejection happens on upload rather than locally
 - Processing is **era-aware**: the era reaches the estimator as the first feature column, so it can split, evaluate and neutralize per era
 - **GPU-first**: NVIDIA CUDA acceleration via cuML, XGBoost GPU, PyTorch
 
