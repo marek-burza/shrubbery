@@ -159,6 +159,24 @@ def test_bare_estimator_artifact_is_rejected(tmp_path: Path) -> None:
         load_model(model_file)
 
 
+def test_load_model_accepts_an_artifact_from_another_process(
+    tmp_path: Path,
+) -> None:
+    model_file = tmp_path / 'model.pkl'
+    store_model(make_model(DummyRegressor()), model_file)
+    script = (
+        'from pathlib import Path;'
+        'from shrubbery.numerai.utilities import load_model;'
+        f'model = load_model(Path({str(model_file)!r}));'
+        'print(model.feature_names)'
+    )
+    result = subprocess.run(
+        [sys.executable, '-c', script], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    assert str(FEATURE_NAMES) in result.stdout
+
+
 def test_inference_uses_the_feature_names_from_the_artifact(
     tmp_path: Path,
 ) -> None:

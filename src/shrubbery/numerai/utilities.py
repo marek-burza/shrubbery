@@ -43,7 +43,7 @@ def load_model(model_file: Path) -> NumeraiModel:
         raise FileNotFoundError(f'No stored model at {model_file}. ')
     with model_file.open('rb') as file:
         model = cloudpickle.load(file)
-    if not isinstance(model, NumeraiModel):
+    if type(model).__name__ != NumeraiModel.__name__:
         raise TypeError(f'{model_file} holds {type(model).__name__}.')
     logger.info(f'Loaded model: {model_to_string(model.estimator)}')
     logger.info(
