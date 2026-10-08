@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.scripts]
-numerai-run = "shrubbery.numerai.main:main"
+numerai-run = "shrubbery.numerai.main:app"
 numerai-scores = "shrubbery.numerai.scores:app"
 
 [dependency-groups]

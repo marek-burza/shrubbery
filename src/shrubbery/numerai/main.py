@@ -1,17 +1,13 @@
-import argparse
 import gc
-import os
 import runpy
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
-import numpy as np
-import torch
+import typer
 
 from shrubbery.numerai.constants import (
     COLUMN_ERA,
-    RANDOM_SEED,
     SUBDIRECTORY_MODELS,
 )
 from shrubbery.numerai.ingest import (
@@ -123,24 +119,27 @@ class NumeraiRunner:
         self.submit(model, feature_names)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description='Shrubbery')
-    parser.add_argument(
-        '--model',
-        type=str,
-        default=os.environ['NUMERAI_MODEL'],
-        help='Name of the model',
-    )
-    parser.add_argument(
-        '--retrain', action='store_true', help='Use this flag to retrain'
-    )
-    arguments = parser.parse_args()
+app = typer.Typer(
+    add_completion=False,
+    context_settings={'help_option_names': ['-h', '--help']},
+)
+
+
+@app.command()
+def main(
+    model: Annotated[
+        str, typer.Option(envvar='NUMERAI_MODEL', help='Name of the model')
+    ],
+    retrain: Annotated[
+        bool, typer.Option('--retrain', help='Use this flag to retrain')
+    ] = False,
+) -> None:
     NumeraiRunner(
-        numerai_model_id=arguments.model,
+        numerai_model_id=model,
         feature_set_name='small',
-        retrain=arguments.retrain,
+        retrain=retrain,
     ).run()
 
 
 if __name__ == '__main__':
-    main()
+    app()
