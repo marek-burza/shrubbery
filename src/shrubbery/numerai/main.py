@@ -42,12 +42,10 @@ class NumeraiRunner:
         numerai_model_id: str,
         feature_set_name: str,
         retrain: bool,
-        deterministic: bool,
     ) -> None:
         self.numerai_model_id = numerai_model_id
         self.feature_set_name = feature_set_name
         self.retrain = retrain
-        self.deterministic = deterministic
 
     @property
     def model_script_file(self) -> Path:
@@ -110,9 +108,6 @@ class NumeraiRunner:
             traceback.print_exc()
 
     def run(self) -> None:
-        if self.deterministic:
-            torch.manual_seed(RANDOM_SEED)
-            np.random.seed(RANDOM_SEED)
         silence_false_positive_warnings()
         logger.info(f'Tournament round: {napi.get_current_round()}')
         logger.info(f'Model Name: {self.numerai_model_id}')
@@ -144,7 +139,6 @@ def main() -> None:
         numerai_model_id=arguments.model,
         feature_set_name='small',
         retrain=arguments.retrain,
-        deterministic=False,
     ).run()
 
 
