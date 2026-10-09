@@ -23,7 +23,8 @@ encrypted with `SecretBox` under `SHRUBBERY_KEY` in `data/notes.data`.
 Each note has a unique UTC `timestamp` (its id), a single word `type`, a one
 line `summary` and a Markdown `text`. `list` prints one note per line,
 `show` prints the text of one note verbatim, `add` reads the text from stdin and
-prints the new timestamp, `delete` removes a note.
+prints the new timestamp (now unless `--timestamp` is given), `delete` removes a
+note.
 """
 
 STORE = Path('data/notes.data')
@@ -90,8 +91,19 @@ def locked(store: Path) -> Generator[None]:
         yield
 
 
+TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+
+
 def now() -> str:
-    return datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    return datetime.now(UTC).strftime(TIMESTAMP_FORMAT)
+
+
+def is_timestamp(timestamp: str) -> bool:
+    try:
+        parsed = datetime.strptime(timestamp, TIMESTAMP_FORMAT)
+    except ValueError:
+        return False
+    return parsed.strftime(TIMESTAMP_FORMAT) == timestamp
 
 
 @app.callback()
@@ -133,8 +145,18 @@ def add(
         str, typer.Argument(metavar='TYPE', help='Single word, e.g. numerai')
     ],
     summary: Annotated[str, typer.Argument(help='One line')],
+    timestamp: Annotated[
+        str,
+        typer.Option(
+            default_factory=now,
+            show_default='now',
+            help='UTC, e.g. 2026-10-09T11:47:03.123456Z',
+        ),
+    ],
 ) -> None:
     text = sys.stdin.read()
+    if not is_timestamp(timestamp):
+        raise fail('TIMESTAMP must look like 2026-10-09T11:47:03.123456Z')
     if not re.fullmatch(r'[a-z]+', kind):
         raise fail('TYPE must be a single lowercase word')
     if not summary.strip() or '\n' in summary:
@@ -144,11 +166,13 @@ def add(
     box = secret_box()
     with locked(ctx.obj):
         con = load(ctx.obj, box)
-        timestamp = now()
-        con.execute(
-            'INSERT INTO notes VALUES (?, ?, ?, ?)',
-            (timestamp, kind, summary.strip(), text),
-        )
+        try:
+            con.execute(
+                'INSERT INTO notes VALUES (?, ?, ?, ?)',
+                (timestamp, kind, summary.strip(), text),
+            )
+        except sqlite3.IntegrityError:
+            raise fail(f'a note at {timestamp} already exists')
         save(ctx.obj, con, box)
     typer.echo(timestamp)
 

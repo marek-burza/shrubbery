@@ -89,6 +89,34 @@ def test_invalid_note_is_rejected(
     assert not store.exists()
 
 
+def test_timestamp_option(store: Path) -> None:
+    timestamp = '2026-01-02T03:04:05.000006Z'
+    result = run('add', '--timestamp', timestamp, 'numerai', 'Old', stdin=BODY)
+    assert result.exit_code == 0, result.output
+    assert result.stdout == f'{timestamp}\n'
+    later = add('numerai', 'New')
+
+    assert run('list').stdout.splitlines() == [
+        f'{timestamp} numerai Old',
+        f'{later} numerai New',
+    ]
+    duplicate = run(
+        'add', '--timestamp', timestamp, 'numerai', 'X', stdin=BODY
+    )
+    assert duplicate.exit_code == 1
+    assert 'already exists' in duplicate.stderr
+
+
+@pytest.mark.parametrize(
+    'timestamp',
+    ['2026-01-02', '2026-01-02T03:04:05Z', '2026-01-02T03:04:05.1Z', 'now'],
+)
+def test_invalid_timestamp_is_rejected(store: Path, timestamp: str) -> None:
+    result = run('add', '--timestamp', timestamp, 'numerai', 'X', stdin=BODY)
+    assert result.exit_code == 1
+    assert not store.exists()
+
+
 def test_delete(store: Path) -> None:
     kept = add('numerai', 'Kept')
     removed = add('numerai', 'Removed')
