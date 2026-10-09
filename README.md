@@ -71,6 +71,14 @@ numerai-run --model <model> --retrain
 ## Tools
 
 - `numerai-scores` (`src/shrubbery/numerai/scores.py`) - fetches live tournament scores (CORR20v2, MMC, BMC, CORR60, MMC60, ... with percentiles) of own or public models from the Numerai API for performance evaluation; JSON records on stdout by default (CSV and table optional), with filtering and per-model summary options. Run `uv run numerai-scores --help` for metric definitions, payout history, interpretation caveats and examples.
+- `shrubbery-notes` (`src/shrubbery/notes.py`) - agent memory, used through the `note` skill: notes in a single table SQLite store, `lzma` compressed and encrypted with PyNaCl's `SecretBox` under `SHRUBBERY_KEY`, kept in `data/notes.data` (gitignored). `list` prints `timestamp type summary` per note, `show TIMESTAMP` prints the text of one note verbatim and nothing else, `add TYPE SUMMARY` reads the text from stdin, stores it verbatim and prints the new timestamp, `delete TIMESTAMP` removes a note. `--store PATH` before the command (e.g. `shrubbery-notes --store /tmp/notes.data list`) selects another store; the lock file sits next to it with a `.lock` suffix. The database is decrypted in memory only, writes are atomic and serialized with a lock on `data/notes.lock`. Notes are listed on request only; eventually a `SessionStart` hook running `uv run shrubbery-notes list` may be added and auto memory disabled with `"autoMemoryEnabled": false` in `.claude/settings.json`, neither is applied yet. Table `notes`:
+
+  | Column | Type | Content |
+  |---|---|---|
+  | `timestamp` | `TEXT PRIMARY KEY` | UTC datetime, ISO 8601 with microseconds, e.g. `2026-10-09T11:47:03.123456Z`; unique |
+  | `type` | `TEXT` | single lowercase word, e.g. `numerai`, `financial` |
+  | `summary` | `TEXT` | one line |
+  | `text` | `TEXT` | Markdown body |
 
 ## Environment Variables (`.env`)
 
@@ -78,6 +86,7 @@ To run the code create `.env` script which sets the necessary environment variab
 
 - `NUMERAI_PUBLIC_ID` & `NUMERAI_SECRET_KEY` - Numerai API credentials
 - `NUMERAI_MODEL` - name of the model for submissions of predictions 
+- `SHRUBBERY_KEY` - key of the `shrubbery-notes` store, created with `openssl rand -base64 32`; back it up separately from `data/` (e.g. in a password manager), it cannot be regenerated and without it the notes are lost
 
 ## CI/CD
 

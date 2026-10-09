@@ -27,6 +27,7 @@ dependencies = [
     "optuna-integration>=5.0.0",
     "pandas>=2.3.3",
     "psutil>=7.2.2",
+    "pynacl>=1.6.2",
     "quantstats>=0.0.64",
     "requests>=2.33.1",
     "scikit-learn>=1.9.1",
@@ -43,6 +44,7 @@ dependencies = [
 [project.scripts]
 numerai-run = "shrubbery.numerai.main:app"
 numerai-scores = "shrubbery.numerai.scores:app"
+shrubbery-notes = "shrubbery.notes:app"
 
 [dependency-groups]
 dev = [

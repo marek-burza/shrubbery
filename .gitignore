@@ -12,3 +12,4 @@ artifacts
 outputs
 workspace
 .claude/settings.local.json
+data
