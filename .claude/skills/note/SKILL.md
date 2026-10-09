@@ -20,7 +20,8 @@ To store a note:
    Convert relative dates to absolute ones.
 4. Reply with the type, summary and returned timestamp.
 
-To recall: `list`, then `show TIMESTAMP` for the relevant entries.
+To recall: `list` (or `list TYPE` to narrow to one type), then `show TIMESTAMP`
+for the relevant entries.
 
 Never print, log or store `SHRUBBERY_KEY`, and never write decrypted notes to
 a file.

@@ -43,6 +43,25 @@ def test_round_trip(store: Path) -> None:
     assert run('show', first).stdout == BODY
 
 
+def test_list_filters_by_type(store: Path) -> None:
+    first = add('numerai', 'First')
+    add('feedback', 'Other')
+    third = add('numerai', 'Third')
+
+    assert run('list', 'numerai').stdout.splitlines() == [
+        f'{first} numerai First',
+        f'{third} numerai Third',
+    ]
+    assert run('list', 'financial').stdout == ''
+
+
+@pytest.mark.parametrize('kind', ['two words', 'Numerai', ''])
+def test_list_rejects_invalid_type(store: Path, kind: str) -> None:
+    result = run('list', kind)
+    assert result.exit_code == 1
+    assert 'single lowercase word' in result.stderr
+
+
 def test_store_is_encrypted(store: Path) -> None:
     add('numerai', 'Plainly visible summary')
 

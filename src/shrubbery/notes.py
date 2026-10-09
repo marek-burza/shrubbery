@@ -21,10 +21,10 @@ Agent memory: notes in a single table SQLite store, `lzma` compressed and
 encrypted with `SecretBox` under `SHRUBBERY_KEY` in `data/notes.data`.
 
 Each note has a unique UTC `timestamp` (its id), a single word `type`, a one
-line `summary` and a Markdown `text`. `list` prints one note per line,
-`show` prints the text of one note verbatim, `add` reads the text from stdin and
-prints the new timestamp (now unless `--timestamp` is given), `delete` removes a
-note.
+line `summary` and a Markdown `text`. `list` prints one note per line, only
+those of `TYPE` if given, `show` prints the text of one note verbatim, `add`
+reads the text from stdin and prints the new timestamp (now unless
+`--timestamp` is given), `delete` removes a note.
 """
 
 STORE = Path('data/notes.data')
@@ -106,6 +106,10 @@ def is_timestamp(timestamp: str) -> bool:
     return parsed.strftime(TIMESTAMP_FORMAT) == timestamp
 
 
+def is_type(kind: str) -> bool:
+    return re.fullmatch(r'[a-z]+', kind) is not None
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
@@ -118,9 +122,22 @@ def main(
 
 
 @app.command('list', help='One line per note: timestamp, type, summary')
-def list_notes(ctx: typer.Context) -> None:
+def list_notes(
+    ctx: typer.Context,
+    kind: Annotated[
+        str | None,
+        typer.Argument(
+            metavar='[TYPE]',
+            help='Only notes of this type. Single word, e.g. numerai',
+        ),
+    ] = None,
+) -> None:
+    if kind is not None and not is_type(kind):
+        raise fail('TYPE must be a single lowercase word')
     rows = load(ctx.obj, secret_box()).execute(
-        'SELECT timestamp, type, summary FROM notes ORDER BY timestamp'
+        'SELECT timestamp, type, summary FROM notes'
+        ' WHERE ? IS NULL OR type = ? ORDER BY timestamp',
+        (kind, kind),
     )
     for timestamp, kind, summary in rows:
         typer.echo(f'{timestamp} {kind} {summary}')
@@ -142,7 +159,10 @@ def show(ctx: typer.Context, timestamp: str) -> None:
 def add(
     ctx: typer.Context,
     kind: Annotated[
-        str, typer.Argument(metavar='TYPE', help='Single word, e.g. numerai')
+        str,
+        typer.Argument(
+            metavar='TYPE', help='Type of the note. Single word, e.g. numerai'
+        ),
     ],
     summary: Annotated[str, typer.Argument(help='One line')],
     timestamp: Annotated[
@@ -157,7 +177,7 @@ def add(
     text = sys.stdin.read()
     if not is_timestamp(timestamp):
         raise fail('TIMESTAMP must look like 2026-10-09T11:47:03.123456Z')
-    if not re.fullmatch(r'[a-z]+', kind):
+    if not is_type(kind):
         raise fail('TYPE must be a single lowercase word')
     if not summary.strip() or '\n' in summary:
         raise fail('SUMMARY must be a single non-empty line')
