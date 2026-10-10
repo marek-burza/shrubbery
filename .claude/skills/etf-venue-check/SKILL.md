@@ -18,6 +18,7 @@ Guiding principle: costs you can control matter, so keep them separate from tax,
 - Resolve the exact fund: full name, ISIN, ticker, provider, **TER**, tracking difference if available, replication (physical/synthetic), distribution policy (accumulating/distributing), domicile, **fund size**, **fund currency**, and the trading currency of each listing.
 - Good sources: justetf.com profile (search by ISIN), the provider's fund page and KID/PRIIPs document, boerse-frankfurt.de ETF page.
 - If the name is ambiguous (several share classes or providers), list the candidates and ask which one, or pick the largest accumulating EUR-traded UCITS share class and say so.
+- Check the **product type**: UCITS ETF, or an ETN/ETC/ETP (debt instrument with issuer counterparty risk), and whether it is **leveraged or inverse** (names or descriptions with 2x, 3x, -1x, Leveraged, Short, Daily, Bear/Bull). Record the leverage factor and the reset period.
 - Note what the ETF holds, by region, because this decides the best trading window (Step 5): US equities, European equities, global (e.g. MSCI World or ACWI, which are mostly US), Asia/EM, bonds, or commodities.
 
 ## Step 2 - Ask about broker AND venue (always ask both, do not assume)
@@ -29,15 +30,16 @@ Ask with AskUserQuestion (or in plain text if unavailable). Reuse anything alrea
 
 ## Step 3 - Look up current costs
 Fees change often, so never rely on memory. Search current sources and state the date of each figure.
-1. **Tradability**: is the ISIN listed or quoted on the chosen venue and offered by the broker (and as a savings plan, if relevant)? If not, say so and name where it is available.
-2. **Broker order fee** for that venue and tariff, from the broker's current price list (Preis- und Leistungsverzeichnis) and recent news. Note that pricing changed after the EU payment-for-order-flow ban in mid-2026. Include minimum and maximum fees and minimum-volume conditions.
-3. **Venue and third-party fees**: Handelsplatzentgelt, Börsengebühr, Fremdkosten or third-party flat fees.
-4. **Savings plan fees**: execution fee and minimum rate.
-5. **Custody or account fees** (Depotgebühr), especially if charged as a percentage.
-6. **Spread**: the current or typical bid-ask spread. The Xetra page on boerse-frankfurt.de shows the spread and the Xetra Liquidity Measure (XLM). gettex and EIX quotes are set by market makers. During Xetra hours, large ETFs typically trade at about 0.02-0.10%.
-7. **Currency conversion (FX)**: does buying this listing require converting EUR, e.g. a USD-traded line or a foreign exchange? If so, find the broker's FX fee or markup. Explain clearly: an ETF bought in EUR on a German venue needs no FX conversion by the broker, even if the fund holds US stocks or is denominated in USD. The currency risk of the holdings is market risk, not a fee.
-8. **Wrapper or management fees** on top of the ETF (robo, managed portfolio, insurance or pension wrapper), if the user mentioned one.
-9. **Product costs**: TER (from the KID), tracking difference, and any issue surcharge (Ausgabeaufschlag), which applies when buying funds directly from a fund company rather than on an exchange.
+1. **Tradability**: is the ISIN listed or quoted on the chosen venue and offered by the broker? If not, say so and name where it is available.
+2. **Savings plan availability** (always check, even for a one-off order): is the ISIN in the broker's own savings plan list (Sparplan-Liste or the broker's ETF search with a savings plan filter)? Prefer the broker's list over third-party comparisons, which lag. Note the minimum rate, any minimum depot value required before a savings plan is allowed, the execution days and the **venue on which savings plans are executed**, which is often fixed by the broker and may differ from the venue the user chose. If it is not available, say so and name a similar savings-plan-eligible ETF at that broker (same or similar index, ISIN, TER).
+3. **Broker order fee** for that venue and tariff, from the broker's current price list (Preis- und Leistungsverzeichnis) and recent news. Note that pricing changed after the EU payment-for-order-flow ban in mid-2026. Include minimum and maximum fees and minimum-volume conditions.
+4. **Venue and third-party fees**: Handelsplatzentgelt, Börsengebühr, Fremdkosten or third-party flat fees.
+5. **Savings plan fees**: execution fee and minimum rate.
+6. **Custody or account fees** (Depotgebühr), especially if charged as a percentage.
+7. **Spread**: the current or typical bid-ask spread. The Xetra page on boerse-frankfurt.de shows the spread and the Xetra Liquidity Measure (XLM). gettex and EIX quotes are set by market makers. During Xetra hours, large ETFs typically trade at about 0.02-0.10%.
+8. **Currency conversion (FX)**: does buying this listing require converting EUR, e.g. a USD-traded line or a foreign exchange? If so, find the broker's FX fee or markup. Explain clearly: an ETF bought in EUR on a German venue needs no FX conversion by the broker, even if the fund holds US stocks or is denominated in USD. The currency risk of the holdings is market risk, not a fee.
+9. **Wrapper or management fees** on top of the ETF (robo, managed portfolio, insurance or pension wrapper), if the user mentioned one. Add the ongoing costs of the funds inside the wrapper and compare only the total, because providers can shift costs between their own fee and the fund costs (e.g. rebates from the funds to the provider). Check the fee at the user's amount and for the exact strategy, since fees are often tiered. Ask for the ex-ante cost statement (Kosteninformation), which also shows transaction costs from rebalancing, and check whether any return projection is shown after costs.
+10. **Product costs**: TER and the transaction costs (both from the KID), tracking difference, and any issue surcharge (Ausgabeaufschlag), which applies when buying funds directly from a fund company rather than on an exchange.
 
 ## Step 4 - Cost breakdown
 Present a table, splitting one-off from running costs, and mark every cost charged as a percentage:
@@ -58,8 +60,9 @@ Then add:
 - **Compounding illustration for every running cost charged as a percentage**: show the EUR drag over 10 and 20 years on the user's amount or savings rate, assuming a stated gross return (e.g. 7%). For example, 1% a year over ~20 years takes roughly the equivalent of one year's contributions or more. Compare this with a 0.1-0.2% broad-index ETF.
 
 ## Step 5 - Warnings (always include the relevant ones)
+- **Leveraged or inverse products** (strong warning, put first): they reset daily, so over longer periods volatility decay makes the return deviate from, and often fall far below, the leverage factor times the index return, even when the index ends higher. They are trading instruments, not suited to long-term holding or savings plans. ETNs and ETCs also carry issuer default risk, as they are not segregated fund assets. Name the unleveraged UCITS ETF on the same index (ISIN, TER) as the alternative.
 - **Management fee (TER)**: flag above about **0.30%** for a broad index ETF, and strongly flag above **0.50%**. Active funds at 1-2% a year usually lose to cheap index ETFs after costs. If a cheaper ETF on the same or a very similar index exists, name it with its TER and ISIN.
-- **Any cost charged as a percentage**: percentage order fees, percentage savings plan fees, custody fees, robo/advisory or wrapper fees, insurance wrappers. Say clearly that these scale with the money and compound. Prefer flat EUR fees or zero.
+- **Any cost charged as a percentage**: percentage order fees, percentage savings plan fees, custody fees, robo/advisory or wrapper fees, insurance wrappers. Say clearly that these scale with the money and compound. Prefer flat EUR fees or zero. For robo or managed portfolios, Stiftung Warentest (Finanzen 7/2026, costs as of 31 Jan 2026) rated a provider fee of 1% a year or more as poor (mangelhaft); the cheapest well-rated offers cost about 0.3-0.65% a year in total including fund costs, against about 0.1-0.2% for a do-it-yourself ETF portfolio.
 - **Currency conversion fees**: warn if the chosen listing or venue triggers FX conversion. Recommend the EUR listing on a German venue where one exists.
 - **Issue surcharges** (Ausgabeaufschlag, up to ~5%) if buying via a fund company instead of an exchange.
 - **Small or illiquid funds**: fund size under about EUR 100 million (closure or merger risk), wide spread, high XLM, few market makers.
@@ -94,8 +97,8 @@ Always warn against:
 For **savings plans**, the broker usually sets the execution time, so timing advice mostly doesn't apply; say so briefly.
 
 ## Step 7 - Report back (keep it compact)
-1. ETF identified: name, ISIN, TER, fund size, what it holds.
-2. Broker and venue checked: tradable yes/no, savings-plan eligible yes/no.
+1. ETF identified: name, ISIN, product type (UCITS ETF or ETN/ETC/ETP, leveraged or inverse), TER, fund size, what it holds.
+2. Broker and venue checked: tradable yes/no, savings-plan eligible yes/no with minimum rate and execution venue.
 3. The cost breakdown table, totals, and the compounding illustration for any cost charged as a percentage.
 4. Warnings, in order of how much money they cost.
 5. Best time window, with the EU/US overlap stated (and the DST caveat if relevant).
