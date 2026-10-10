@@ -19,6 +19,7 @@ Guiding principle: costs you can control matter, so keep them separate from tax,
 - Good sources: justetf.com profile (search by ISIN), the provider's fund page and KID/PRIIPs document, boerse-frankfurt.de ETF page.
 - If the name is ambiguous (several share classes or providers), list the candidates and ask which one, or pick the largest accumulating EUR-traded UCITS share class and say so.
 - Check the **product type**: UCITS ETF, or an ETN/ETC/ETP (debt instrument with issuer counterparty risk), and whether it is **leveraged or inverse** (names or descriptions with 2x, 3x, -1x, Leveraged, Short, Daily, Bear/Bull). Record the leverage factor and the reset period.
+- Check the **domicile and legal structure**: a UCITS fund domiciled in IE, LU or DE, or a fund domiciled anywhere else (e.g. US, CH, CA, UK, JP), and whether it is a corporate-style fund or a tax-transparent partnership, trust or pool that passes its income through to the holders (in the US: a **Schedule K-1** instead of a Form 1099; the prospectus says "taxed as a partnership", the fund page lists K-1 information). Record which it is, because it decides the foreign tax exposure (Step 5).
 - Note what the ETF holds, by region, because this decides the best trading window (Step 5): US equities, European equities, global (e.g. MSCI World or ACWI, which are mostly US), Asia/EM, bonds, or commodities.
 
 ## Step 2 - Ask about broker AND venue (always ask both, do not assume)
@@ -63,6 +64,17 @@ Then add:
 - **Leveraged or inverse products** (strong warning, put first): they reset daily, so over longer periods volatility decay makes the return deviate from, and often fall far below, the leverage factor times the index return, even when the index ends higher. They are trading instruments, not suited to long-term holding or savings plans. ETNs and ETCs also carry issuer default risk, as they are not segregated fund assets. Name the unleveraged UCITS ETF on the same index (ISIN, TER) as the alternative.
 - **Management fee (TER)**: flag above about **0.30%** for a broad index ETF, and strongly flag above **0.50%**. Active funds at 1-2% a year usually lose to cheap index ETFs after costs. If a cheaper ETF on the same or a very similar index exists, name it with its TER and ISIN.
 - **Any cost charged as a percentage**: percentage order fees, percentage savings plan fees, custody fees, robo/advisory or wrapper fees, insurance wrappers. Say clearly that these scale with the money and compound. Prefer flat EUR fees or zero. For robo or managed portfolios, Stiftung Warentest (Finanzen 7/2026, costs as of 31 Jan 2026) rated a provider fee of 1% a year or more as poor (mangelhaft); the cheapest well-rated offers cost about 0.3-0.65% a year in total including fund costs, against about 0.1-0.2% for a do-it-yourself ETF portfolio.
+- **Foreign tax obligations** (strong warning for tax-transparent funds, put right after leveraged products): any fund domiciled outside IE, LU and DE, or structured as a partnership, trust or pool, can bring tax obligations in its home country on top of German tax. Unlike German tax, these are avoidable by choosing an IE, LU or DE UCITS fund, so treat them as a trap, not as background. For the fund's domicile, check and report:
+  - **Filing obligations**: does a foreign shareholder have to file a tax return there?
+  - **Withholding tax** on distributions and, in some countries, on sale proceeds, the treaty rate with Germany, the form needed to get it, and whether and how the excess can be reclaimed (often slow and paid for). Only the treaty rate is creditable against German tax, the rest is lost unless reclaimed. Example: Swiss funds deduct 35% Verrechnungssteuer, of which 20% must be reclaimed from Switzerland.
+  - **Phantom income**: for tax-transparent structures, tax due on income that was never paid out.
+  - **Estate or inheritance tax** in the fund's country, and **transaction taxes** or stamp duties on trades there.
+  - IE and LU UCITS funds normally create none of these for a German investor; check rather than assume.
+  The US is the most common case:
+  - **US partnerships and commodity pools issuing a K-1** (many futures-based commodity, volatility and freight ETFs): each shareholder is taxed on their share of the fund's income whether or not anything is paid out, so the tax bill can exceed the cash received. A non-US shareholder may have to file a US tax return (Form 1040-NR) and can be subject to US withholding on allocated income and, under Section 1446(f), 10% withholding on the gross proceeds of a sale, not just the gain, unless the fund publishes a qualified notice that an exception applies. Check the fund's tax page and its latest qualified notice, and say whether withholding on sale proceeds applies. Many brokers refuse K-1 funds for non-US clients for these reasons.
+  - **Ordinary US 1940 Act ETFs**: no US return is needed, but US withholding tax applies to dividends (15% with a W-8BEN under the German-US treaty, 30% without one) and is only partly creditable against German tax.
+  - **All US-domiciled funds**: shares are US-situs assets for US estate tax; for a German resident the German-US estate tax treaty usually gives relief, but heirs may face US paperwork.
+  - Funds domiciled outside the EU usually have no PRIIPs KID, so German brokers often block retail purchases anyway. Name the IE, LU or DE UCITS equivalent (ISIN, TER) if one exists, and say that the German treatment of a foreign partnership or trust is a question for a tax adviser.
 - **Currency conversion fees**: warn if the chosen listing or venue triggers FX conversion. Recommend the EUR listing on a German venue where one exists.
 - **Issue surcharges** (Ausgabeaufschlag, up to ~5%) if buying via a fund company instead of an exchange.
 - **Small or illiquid funds**: fund size under about EUR 100 million (closure or merger risk), wide spread, high XLM, few market makers.
@@ -97,7 +109,7 @@ Always warn against:
 For **savings plans**, the broker usually sets the execution time, so timing advice mostly doesn't apply; say so briefly.
 
 ## Step 7 - Report back (keep it compact)
-1. ETF identified: name, ISIN, product type (UCITS ETF or ETN/ETC/ETP, leveraged or inverse), TER, fund size, what it holds.
+1. ETF identified: name, ISIN, product type (UCITS ETF or ETN/ETC/ETP, leveraged or inverse), domicile and, if not an IE, LU or DE UCITS fund, its foreign tax treatment (e.g. K-1 or 1099 in the US), TER, fund size, what it holds.
 2. Broker and venue checked: tradable yes/no, savings-plan eligible yes/no with minimum rate and execution venue.
 3. The cost breakdown table, totals, and the compounding illustration for any cost charged as a percentage.
 4. Warnings, in order of how much money they cost.
