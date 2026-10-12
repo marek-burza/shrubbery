@@ -22,6 +22,35 @@ How to work with these sources:
 | IMF PortWatch | Chokepoint transits and port calls from AIS data | https://portwatch.imf.org/ |
 | Google Trends | Retail attention (timing row 3) | https://trends.google.com/ |
 
+## Prediction markets
+
+Polymarket and Kalshi list questions (bets) such as "Hormuz agreement by DATE?", "Military action against the Saudi East-West pipeline by...?" or "Confirmed Irkutsk plague cases this month?". A new question appears when enough traders care about a risk, often before mainstream coverage. That makes last week's new questions a drip signal for Stage 1, and their odds one reading of what is priced in Stage 4.
+
+Everything below works with WebFetch alone: each URL returns JSON in a single fetch of under 100k characters. Keep `limit`/`page_size` and `include_markets=false` exactly as shown, because larger replies get truncated and questions are silently missed. Set the cutoff date to 7 days before today.
+
+**Polymarket: new questions per topic.** Fetch once per tag, and again with `offset=15`, `offset=30` and so on until fewer than 15 events come back:
+
+`https://gamma-api.polymarket.com/events?tag_slug=<tag>&start_date_min=<cutoff>T00:00:00Z&order=createdAt&ascending=false&limit=15&offset=0&include_markets=false`
+
+- Tags: `geopolitics`, `world`, `economy`, `commodities`, `climate`, `tech`. Skip `finance`, `weather`, `sports` and `crypto`, which are flooded by short repeating price and sports markets.
+- Fields per question: `createdAt`, `title`, `description` (the resolution rules), `volume`, `volume1wk`, `liquidity` and `slug` (page at `https://polymarket.com/event/<slug>`). For the odds, fetch `https://gamma-api.polymarket.com/events/slug/<slug>`, whose markets carry `outcomePrices`.
+- Verified 2026-10-12 for the week from Oct 5: for all six tags, `start_date_min` returned exactly the questions whose `createdAt` fell in the week, with none missed and none extra. In that week geopolitics had 33 new questions, world 44, economy 7, commodities 36, climate 7 and tech 36.
+
+**Kalshi: new questions per crisis keyword.** Kalshi has no per-topic listing sorted by creation. Search one keyword per candidate crisis (for example `plague`, `Hormuz`, `hurricane`, `tariff` or `default`):
+
+`https://api.elections.kalshi.com/v1/search/series?query=<keyword>&page_size=8`
+
+- A question is new when the earliest `open_ts` among its `markets` is on or after the cutoff. Also record `series_ticker`, `event_title`, `category` and `total_volume`.
+- To confirm, fetch `https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=<series_ticker>&min_created_ts=<cutoff unix>&limit=100`. Every market it returns was created on or after the cutoff, and each carries `created_time`, `title`, `last_price_dollars` (the odds) and `volume_fp`.
+- Verified 2026-10-12: "plague" returned the three plague questions that a full scan of all market creation times had found for the week, with `open_ts` within an hour of `created_time`.
+- Don't list Kalshi by category with `order_by=newest`. That sort is not strict, and it buries one-off questions under 15-minute and hourly repeats.
+
+How to read new questions:
+- Several new questions on one theme within a week (for example plague in Irkutsk, then US pneumonic plague, then naming the pathogen) count as one moderate signal, not several. A single new question is weak.
+- Weekly volume below about $10k is noise. Odds on questions tied to US elections inherit partisan bias.
+- The title often differs from what actually resolves the market, so read the resolution rules before using the odds as "priced".
+- If a fetch is refused or rate-limited (HTTP 429), fall back to WebSearch with `site:polymarket.com` or `site:kalshi.com` and the crisis keyword. Search results carry no creation dates, so treat them as existing questions only.
+
 ## Conflict and shipping
 
 | Source | Use | URL |

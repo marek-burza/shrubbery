@@ -68,6 +68,7 @@ Goal: a raw list of candidate crises, each with dated sources.
 - Pull hard data where it exists (see `references/data-sources.md`): freight indices, futures curves, inventories, case counts, credit spreads, port calls, GPR/EPU indices.
   - Save any series you will analyse to a CSV in the working directory.
   - Run `scripts/signals.py` on it rather than eyeballing it.
+- Check prediction markets for questions listed in the last 7 days (Polymarket by topic tag, Kalshi by crisis keyword; see `references/data-sources.md`). New questions on a risk that the press barely covers yet are a drip signal.
 
 ### Stage 2: Sift
 
@@ -107,7 +108,7 @@ Do this in order. The method is outside view first (the Good Judgment approach),
 1. **Define the question so it can be resolved.**
    - Example: "Will VLCC Middle-East→China rates still be above $X/day on DATE?"
    - Example: "Will the outbreak reach N countries by DATE?"
-   - The question must contrast with what the market prices. Find what is priced: the futures curve, options-implied moves, analyst consensus, central-bank pricing, and what the instrument's manager says they expect.
+   - The question must contrast with what the market prices. Find what is priced: the futures curve, options-implied moves, analyst consensus, central-bank pricing, prediction-market odds on the same or a closely linked question (read its resolution rules first), and what the instrument's manager says they expect.
 2. **Base rate** from the nearest analogue class, using the table in `references/signals-and-scoring.md`. State the reference class.
 3. **Update with likelihood ratios** for each hallmark or counter-signal present, using the default strengths in the reference file.
    - Count correlated signals once.
@@ -185,7 +186,7 @@ Not financial advice. Facts dated; inferences marked (inference). Profile: [defa
 **Family / tags:** … | **Phase:** threat / act / drip / splash / repair
 
 ## What's priced vs what we expect
-- Priced: … (curve, options, consensus — with sources)
+- Priced: … (curve, options, consensus, prediction-market odds — with sources)
 - Our view: P(worse/longer than priced) = X% (base rate Y% from [class] → updates [list with LRs])
 - If right: ~+A% over N months; if wrong: ~−B% (stop)
 
