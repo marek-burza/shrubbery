@@ -1,6 +1,10 @@
-# Numerai Experiments
+# Shrubbery
 
-Shrubbery is an experimental ML pipeline for generating predictions for Numerai, a hedge fund where trades are determined based on predictions crowdsourced from data scientists given anonymized data. It uses GPU-accelerated models, era-aware time series processing, and Weights & Biases for experiment tracking. It is also intended as experimentation ground for other code related to financial markets.
+Shrubbery is a repo where I experiment with learning about financial markets and Numerai and how to apply machine learning and AI agents to these topics. GPU-accelerated models are used here also in the context of expanding knowledge/skills related to AI/ML engineering.
+
+Notes:
+
+- Numerai is a hedge fund where trades are determined based on predictions crowdsourced from data scientists given anonymized data. , era-aware time series processing.
 
 ## Living Document
 
@@ -13,19 +17,19 @@ As project priorities shift, this file is meant to be updated to reflect current
 - **Package manager**: `uv` (dependencies in `pyproject.toml`, lockfile in `uv.lock`)
 - **Sandboxing**: `podman`
 
-**Running**:
+**Running Numerai Models**:
 
-Models are executed by the user in a Docker container via shrubbery's `run.py`:
+Numerai models are executed by the user in a Docker container via shrubbery's `run.sh`:
 
 ```bash
 # Run model inference
-run.py --model <model>
+run.sh --model <model>
 
 # Run model training
-run.py --model <model> --retrain
+run.sh --model <model> --retrain
 ```
 
-Models are executed by the coding agent already inside the Docker container directly via `uv`:
+Numerai models are executed by the coding agent already inside a container directly via:
 
 ```bash
 # Run model inference
@@ -79,6 +83,10 @@ numerai-run --model <model> --retrain
   | `type` | `TEXT` | single lowercase word, e.g. `numerai`, `financial` |
   | `summary` | `TEXT` | one line |
   | `text` | `TEXT` | Markdown body |
+
+## Libraries
+
+- Financial market experiments can use the `QuantLib`, `skfolio` & `quantstats` to not reinvent the code from scratch.
 
 ## Environment Variables (`.env`)
 

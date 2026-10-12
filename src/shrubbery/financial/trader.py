@@ -6,6 +6,7 @@
 #     "pytest",
 #     "quantstats",
 #     "scipy",
+#     "skfolio",
 #     "typer",
 #     "yfinance",
 # ]
@@ -22,6 +23,7 @@ Implements the Yale 'Financial Markets' concepts:
 """
 
 import datetime
+import typing
 
 import numpy as np
 import pandas as pd
@@ -30,6 +32,8 @@ import quantstats as qs  # For technical analysis (RSI, MACD, etc.) see `pandas-
 import typer
 import yfinance as yf
 from scipy import stats
+from skfolio import Portfolio
+from skfolio.preprocessing import prices_to_returns
 
 # ----------------------------------------------------------------------
 # Defaults
@@ -77,13 +81,15 @@ def load_prices(
     return close
 
 
-def prices_to_returns(prices: pd.DataFrame) -> pd.DataFrame:
+def prices_to_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
     """Continuously compounded (log) returns: r = log(P_t / P_{t-1}).
     Assumes gains are reinvested instantaneously rather than at discrete
     intervals, equivalent to the rate r such that P_{t-1} * e^r = P_t.
     Used because multi-day returns are a simple sum of daily returns, which
     makes variance, regression, and VaR arithmetic straightforward."""
-    return np.log(prices / prices.shift(1)).dropna()
+    return typing.cast(
+        pd.DataFrame, prices_to_returns(prices, log_returns=True)
+    )
 
 
 # ----------------------------------------------------------------------
@@ -104,20 +110,18 @@ def historical_var(returns: pd.Series, confidence: float) -> float:
 
 
 def parametric_var(returns: pd.Series, confidence: float) -> float:
-    """Gaussian (variance-covariance) VaR as a positive loss fraction."""
-    mu, sigma = returns.mean(), returns.std(ddof=1)
-    # ppf (percent point function) is the inverse of the CDF (cumulative
-    # distribution function). The CDF answers "given a value x, what fraction
-    # of outcomes fall below x?"; ppf answers the reverse: "given a
-    # probability p, what value x has exactly p of outcomes below it?"
-    # So ppf(0.99) returns ~2.326, the z-score for the 99th percentile of a
-    # standard normal distribution.
-    z = stats.norm.ppf(confidence)
-    # mu - z*sigma is the return at the confidence-level cutoff (the point on
-    # the return distribution that separates the normal range from the tail)
-    # on the fitted Gaussian: the mean shifted left by z standard deviations. It is negative
-    # (a loss), so we negate it to return a positive loss fraction.
-    return -(mu - z * sigma)
+    """Gaussian (variance-covariance) VaR as a positive loss fraction.
+    The return at the confidence-level cutoff (the point on the return
+    distribution that separates the normal range from the tail) of a
+    Gaussian fitted from the mean and std is mu - z*sigma, where z is the
+    z-score of the confidence level (~2.326 for 99%). It is negative (a
+    loss), so it is negated to return a positive loss fraction."""
+    return -typing.cast(
+        float,
+        qs.stats.value_at_risk(
+            returns, confidence=confidence, prepare_returns=False
+        ),
+    )
 
 
 # ----------------------------------------------------------------------
@@ -158,41 +162,6 @@ def regression_stats(
         'beta': slope,
         'alpha_per_period': intercept,
         'r_squared': r**2,
-        'p_value': p,
-        'std_err': se,
-        'resid': resid,
-        'asset_returns': df['asset'],
-        'market_returns': df['market'],
-    }
-
-
-def regression_stats_alternative(
-    asset_returns: pd.Series, market_returns: pd.Series
-) -> dict:
-    """Same as regression_stats but derives beta directly from the covariance
-    formula (β = cov(asset, market) / var(market)) instead of delegating to
-    scipy.linregress. Produces identical results."""
-    df = pd.concat([asset_returns, market_returns], axis=1).dropna()
-    df.columns = ['asset', 'market']
-
-    rf_per_period = RISK_FREE_ANNUAL / PERIODS_PER_YEAR
-    x = df['market'] - rf_per_period  # market excess return
-    y = df['asset'] - rf_per_period  # asset excess return
-
-    beta = x.cov(y) / x.var(ddof=1)
-    alpha = y.mean() - beta * x.mean()
-    resid = y - (alpha + beta * x)
-    r_squared = x.corr(y) ** 2
-
-    n = len(x)
-    se = np.sqrt(resid.var(ddof=1) / ((n - 2) * x.var(ddof=1)))
-    t = beta / se
-    p = 2 * (1 - stats.t.cdf(abs(t), df=n - 2))
-
-    return {
-        'beta': beta,
-        'alpha_per_period': alpha,
-        'r_squared': r_squared,
         'p_value': p,
         'std_err': se,
         'resid': resid,
@@ -268,7 +237,7 @@ def main(
     if prices.empty or prices.shape[1] < 2:
         raise SystemExit('No data returned. Check tickers/dates.')
 
-    returns = prices_to_returns(prices)
+    returns = prices_to_log_returns(prices)
     market_returns = returns[market]
 
     print(
@@ -346,7 +315,7 @@ def main(
             f'(should match total by definition)'
         )
         print(
-            f'\n  Annualised volatility  : {asset_returns.std(ddof=1) * np.sqrt(PERIODS_PER_YEAR):.2%}'
+            f'\n  Annualised volatility  : {qs.stats.volatility(asset_returns, periods=PERIODS_PER_YEAR, prepare_returns=False):.2%}'
             f'  (standard deviation of daily returns scaled to a full year; a common summary of total risk)'
         )
 
@@ -354,8 +323,13 @@ def main(
     if len(assets) > 1:
         assets_returns = returns[assets]
         cov_matrix = assets_returns.cov() * PERIODS_PER_YEAR
-        portfolio_variance = weights @ cov_matrix.values @ weights
-        portfolio_volatility = np.sqrt(portfolio_variance)
+        portfolio = Portfolio(
+            X=assets_returns,
+            weights=weights,
+            annualization_factor=PERIODS_PER_YEAR,
+        )
+        portfolio_variance = portfolio.annualized_variance
+        portfolio_volatility = portfolio.annualized_standard_deviation
         print(f'\n{"=" * 70}')
         print(
             f'Portfolio ({", ".join(f"{asset} {weight:.0%}" for asset, weight in zip(assets, weights))})'
@@ -406,7 +380,7 @@ def _make_prices(
 @pytest.fixture(scope='module')
 def _sample() -> dict[str, pd.Series]:
     prices = _make_prices()
-    log_returns = prices_to_returns(prices)
+    log_returns = prices_to_log_returns(prices)
     simple_returns = prices.pct_change().dropna()
     return {
         'log_asset': log_returns['asset'],
@@ -460,18 +434,34 @@ def test_risk_decomposition_identity(_sample: dict[str, pd.Series]) -> None:
     assert abs(dec['variance_total'] - dec['reconstructed_total']) < _EPS
 
 
-def test_regression_stats_alternative(_sample: dict[str, pd.Series]) -> None:
-    # Verifies that the covariance-formula implementation produces the same
-    # results as the linregress-based implementation.
-    reg = regression_stats(_sample['log_asset'], _sample['log_market'])
-    alt = regression_stats_alternative(
-        _sample['log_asset'], _sample['log_market']
+def test_log_returns(_sample: dict[str, pd.Series]) -> None:
+    # skfolio's log returns must equal log(P_t / P_{t-1}).
+    prices = _make_prices()
+    expected = np.log(prices / prices.shift(1)).dropna()
+    pd.testing.assert_frame_equal(prices_to_log_returns(prices), expected)
+
+
+def test_parametric_var_formula(_sample: dict[str, pd.Series]) -> None:
+    # QuantStats' parametric VaR must equal -(mu - z*sigma).
+    returns = _sample['log_asset']
+    z = stats.norm.ppf(VAR_CONFIDENCE)
+    expected = -(returns.mean() - z * returns.std(ddof=1))
+    assert abs(parametric_var(returns, VAR_CONFIDENCE) - expected) < _EPS
+
+
+def test_portfolio_variance(_sample: dict[str, pd.Series]) -> None:
+    # skfolio's annualised portfolio variance must equal w' * Sigma * w.
+    returns = prices_to_log_returns(_make_prices())
+    weights = np.array([0.6, 0.4])
+    cov_matrix = returns.cov() * PERIODS_PER_YEAR
+    portfolio = Portfolio(
+        X=returns, weights=weights, annualization_factor=PERIODS_PER_YEAR
     )
-    assert abs(reg['beta'] - alt['beta']) < _EPS
-    assert abs(reg['alpha_per_period'] - alt['alpha_per_period']) < _EPS
-    assert abs(reg['r_squared'] - alt['r_squared']) < _EPS
-    assert abs(reg['p_value'] - alt['p_value']) < _EPS
-    assert abs(reg['std_err'] - alt['std_err']) < _EPS
+    expected = weights @ cov_matrix.values @ weights
+    assert abs(portfolio.annualized_variance - expected) < _EPS
+    assert (
+        abs(portfolio.annualized_standard_deviation - np.sqrt(expected)) < _EPS
+    )
 
 
 if __name__ == '__main__':
