@@ -1,6 +1,6 @@
 ---
-name: "etf-venue-check"
-description: "Use whenever I consider buying an ETF or ask about one: asks broker and venue, breaks down all costs, flags percentage-based and FX fees, and recommends the best trading window."
+name: "etf-venue-peer-check"
+description: "Use instead of etf-venue-check whenever I consider buying an ETF or ask about one: asks broker and venue, breaks down all costs, flags percentage-based and FX fees, recommends the best trading window, and appends a peer check against same-index ETFs."
 ---
 
 # ETF cost, venue and timing check
@@ -116,5 +116,53 @@ For **savings plans**, the broker usually sets the execution time, so timing adv
 5. Best time window, with the EU/US overlap stated (and the DST caveat if relevant).
 6. A cheaper alternative, if one exists: same index, lower TER, or a better venue or listing.
 7. Sources with dates.
+8. **Appendix: peer check** (see below), after the sources so it never delays the cost verdict.
 
 If the user compares several venues or brokers, show them side by side: venue/broker | tradable | order fee | venue fees | typical spread | FX needed | hours | best window | total one-off cost.
+
+## Appendix - Peer check (is this a good choice within its group?)
+Answers a different question from the main report: not "what does buying it cost?" but "is this the best fund for the job among its siblings?". Keep it short: one table and a one-line verdict. Never let it block or delay the main report; if the data cannot be found, say so in one line and stop.
+
+### Define the peer group
+- **Same-index ETFs** (the normal case): every UCITS ETF tracking exactly the same index, including other share classes. Use the justETF index guide (justetf.com/en/how-to/<index>-etfs.html, e.g. msci-world-etfs.html) or the justETF search filtered by index. Use the same index variant: MSCI World is not MSCI World IMI, ESG/SRI, Equal Weighted or a hedged class; a currency-hedged class only compares with hedged siblings.
+- **No same-index siblings** (thematic, active, smart-beta with a proprietary index): compare within the closest category (justETF theme or category page, e.g. semiconductors, defense, quality). Say clearly that return gaps here mostly reflect different index rules, not tracking quality, so this is a cost-and-return check, not a quality rating.
+
+### Filter to what the user can actually buy
+Apply the same broker, venue and account filters as the core check (Steps 2 and 3.1) before ranking anything. A peer the user cannot buy is not a peer.
+- Keep only peers that are **listed in EUR on the user's chosen venue** and **offered by the user's broker** under their tariff, so no FX conversion is needed.
+- If the user saves monthly, keep only peers that are **savings-plan eligible** at that broker, and note any savings-plan fee that differs from the chosen fund (e.g. promo vs standard plans).
+- If the user buys through a wrapper (robo, managed portfolio, insurance or Altersvorsorgedepot), keep only funds that wrapper allows.
+- Check efficiently: use the broker's savings-plan or ETF list and the venue's product search once for the whole group, rather than one lookup per fund; fall back to the justETF profile's listings for venue tradability. If tradability cannot be confirmed for a peer, drop it and say how many were dropped for that reason.
+- State the size of the group before and after filtering, e.g. "34 MSCI World ETFs, 19 available as savings plans at your broker on gettex".
+- If the overall best peer is excluded only by the filter, mention it in one line with what stands in the way (e.g. "only on Xetra, not gettex"), so the user can decide whether it is worth changing venue. Never rank or recommend it inside the table.
+
+### Collect, per peer (state the "as of" date)
+Fund size, TER, replication (physical / sampling / swap), distribution policy, domicile, 1-year and 3-year return in EUR (including dividends), and tracking difference if published. Calendar-year returns help when 3-year history is missing.
+
+### Interpret
+- For same-index ETFs, the 3-year return gap between siblings is mostly TER plus tracking quality. A sibling that is **cheaper and returned the same or more** is the key finding.
+- Treat gaps under about 0.2 percentage points a year as noise; don't recommend a switch on that alone.
+- Accumulating and distributing classes are comparable on total return; mention the tax and cash-flow difference only if the user cares about distributions.
+- Swap-based ETFs can beat physical ones on US equities because of dividend withholding tax treatment; note this as the likely reason, not as a red flag.
+- Rank the chosen fund on TER, fund size and 3-year return within the **filtered** group, e.g. "4th of 19 on 3-year return, 6th cheapest, largest by size".
+
+### Suggest an alternative only if all of these hold
+1. Same index (or, for category peers, a clearly comparable strategy).
+2. Lower TER and equal or better 3-year return.
+3. Fund size of at least about EUR 500 million and at least 3 years of history.
+4. It passed the broker, venue, savings-plan and wrapper filter above. Re-confirm it for the one fund you recommend, with the date of the check.
+If the user already holds the fund, add that switching means selling, which can realise taxable gains; for a new savings plan there is no such cost.
+
+### Finanztest rating (optional, never fetched)
+Stiftung Warentest's Fondsfinder ratings (Erste Wahl / 1-5 points / Chance-Risiko-Zahl) are paywalled. Don't try to retrieve them or reconstruct them from press articles. If the user has pasted a Finanztest rating, show it as one line in the appendix. For active, thematic or niche funds, add one line noting that Finanztest offers a risk-adjusted rating they can look up and paste in.
+
+### Output
+Start with the filter line (group size before and after, and what was filtered on). Then:
+
+| ETF (ISIN) | TER | Fund size | Replication | 1y | 3y | Savings-plan fee at your broker |
+|---|---|---|---|---|---|---|
+
+Show the chosen fund (marked) plus the 4-6 most relevant filtered peers: the cheapest, the largest, and the best 3-year performers. Drop the savings-plan column for one-off orders. Then one line, e.g.:
+"Peer check: 4th of 19 buyable on 3-year return, 6th cheapest. UBS Core MSCI World (IE00BD4TXV59) is cheaper (0.06% vs 0.20%), returned 0.7 pp more over 3 years and is on your broker's savings-plan list on gettex."
+Add the one-line note on an excluded better peer, if there is one.
+Cite the source and date.
