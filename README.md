@@ -64,6 +64,7 @@ numerai-run --model <model> --retrain
 
 - `market_neutral.py`: removes the S&P 500 correlated component from a series and tests the remaining trend (`uv run python -m shrubbery.financial.market_neutral --help`)
 - `trader.py`: standalone uv script for VaR, beta and CAPM analysis of an asset against a market index via yfinance
+- `semantics.py`: the `financial-semantics` tool, see Tools
 
 ### Key Design Patterns
 
@@ -84,6 +85,8 @@ numerai-run --model <model> --retrain
   | `summary` | `TEXT` | one line |
   | `text` | `TEXT` | Markdown body |
 
+- `financial-semantics` (`src/shrubbery/financial/semantics.py`) - looks up financial vocabulary, identifier schemes and definitions from third-party sources (FIBO incl. its ACTUS module, FIX Orchestra, ISO 10383 MIC and ISO 4217 code lists, EuroVoc, QuantLib-Python-Docs, skfolio, quantstats) and resolves identifiers against FIRDS, GLEIF and OpenFIGI, used through the `financial-semantics` skill. `sources` lists every source with version and licence, `schemes` lists the identifier schemes discovered in FIBO (plus a `builtin` vendor-symbol scheme) and whether each is resolvable, `identify VALUE` infers the scheme of a bare string offline from its syntax, check digit or code list, `resolve VALUE [--to SCHEME]` asks a registry what the identifier denotes, `term LABEL` returns definitions with their source, version and IRI. Sources are fetched lazily and cached in `data/semantics.db` (gitignored), registry answers for 30 days; `--refresh SOURCE` (or `all`) before the command redownloads and reindexes. `--json` on every command. Run `uv run financial-semantics --help` for the full surface.
+
 ## Libraries
 
 - Financial market experiments can use the `QuantLib`, `skfolio` & `quantstats` to not reinvent the code from scratch.
@@ -95,6 +98,7 @@ To run the code create `.env` script which sets the necessary environment variab
 - `NUMERAI_PUBLIC_ID` & `NUMERAI_SECRET_KEY` - Numerai API credentials
 - `NUMERAI_MODEL` - name of the model for submissions of predictions 
 - `SHRUBBERY_KEY` - key of the `shrubbery-notes` store, created with `openssl rand -base64 32`; back it up separately from `data/` (e.g. in a password manager), it cannot be regenerated and without it the notes are lost
+- `OPENFIGI_API_KEY` - optional, raises the OpenFIGI rate limit of `financial-semantics resolve`
 
 ## CI/CD
 

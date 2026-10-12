@@ -46,6 +46,7 @@ dependencies = [
 [project.scripts]
 numerai-run = "shrubbery.numerai.main:app"
 numerai-scores = "shrubbery.numerai.scores:app"
+financial-semantics = "shrubbery.financial.semantics:app"
 shrubbery-notes = "shrubbery.notes:app"
 
 [dependency-groups]
