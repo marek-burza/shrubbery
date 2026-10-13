@@ -16,6 +16,7 @@ dependencies = [
     "cloudpickle>=3.1.2",
     "cudf-cu13>=26.8.1",
     "cuml-cu13>=25.10.0",
+    "huggingface-hub>=2.2.0",
     "lightgbm>=4.6.0",
     "matplotlib>=3.11.2",
     "numerai-tools>=0.7.1",
@@ -48,6 +49,7 @@ numerai-run = "shrubbery.numerai.main:app"
 numerai-scores = "shrubbery.numerai.scores:app"
 financial-semantics = "shrubbery.financial.semantics:app"
 shrubbery-notes = "shrubbery.notes:app"
+shrubbery-qwaude = "shrubbery.qwaude:app"
 
 [dependency-groups]
 dev = [

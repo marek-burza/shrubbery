@@ -45,6 +45,13 @@ ENV UV_LINK_MODE=copy \
 # Initiate Virtual Environment
 RUN /bin/uv venv $VIRTUAL_ENV
 
+RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp.git /tmp/llama.cpp && \
+    cd /tmp/llama.cpp && \
+    cmake -B . . -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 -DLLAMA_BUILD_UI=OFF && \
+    cmake --build . --config Release -j$(nproc) && \
+    cmake --install . --config Release && \
+    rm -rf /tmp/llama.cpp
+
 ENV USER=user
 ENV HOME=/home/$USER
 RUN userdel -r ubuntu 2> /dev/null || true
@@ -58,8 +65,9 @@ ENV TERM=xterm-256color
 # Route ALSA default device through PulseAudio (Claude Code voice mode)
 RUN /bin/bash -c "echo -e 'pcm.!default pulse\nctl.!default pulse' > $HOME/.asoundrc"
 
-RUN curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | /bin/bash
-ENV PATH="$PATH:$VIRTUAL_ENV/bin:$HOME/.local/bin"
+RUN (curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | /bin/bash) && \
+    (curl --proto '=https' --tlsv1.2 -fsSL https://opencode.ai/install | /bin/bash)
+ENV PATH="$PATH:$VIRTUAL_ENV/bin:$HOME/.local/bin:$HOME/.opencode/bin"
 
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
