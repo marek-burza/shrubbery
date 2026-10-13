@@ -40,6 +40,8 @@ MiB = 1024**2
 GB = 1000**3  # Unsloth publishes sizes in decimal GB
 HOST = '127.0.0.1'
 PORT = 8080
+UBATCH = 1024
+PROMPT, GENERATE = 2048, 128
 
 
 # =========================================================================== hardware probe
@@ -270,7 +272,7 @@ PRESETS: dict[str, Preset] = {
     ),
 }
 
-QWEN_EFFORTS = {'none', 'low', 'medium', 'xhigh'}
+QWEN_EFFORTS = {'low', 'medium', 'xhigh'}
 GLM_EFFORTS = {'low', 'high', 'max'}
 
 
@@ -653,7 +655,7 @@ def serve(
     effort: Annotated[
         Optional[str],
         typer.Option(
-            help='reasoning effort — Qwen: none|low|medium|xhigh, GLM: low|high|max'
+            help='reasoning effort — Qwen: low|medium|xhigh, GLM: low|high|max'
         ),
     ] = None,
     mode: Annotated[
@@ -679,7 +681,7 @@ def serve(
     ] = None,
     ubatch: Annotated[
         int, typer.Option(help='batch / micro-batch size')
-    ] = 1024,
+    ] = UBATCH,
     host: str = HOST,
     port: int = PORT,
     paging: Annotated[
@@ -728,7 +730,7 @@ def server_command(
     fit_target: Optional[int] = None,
     threads: Optional[int] = None,
     threads_batch: Optional[int] = None,
-    ubatch: int = 1024,
+    ubatch: int = UBATCH,
     host: str = HOST,
     port: int = PORT,
     paging: bool = False,
@@ -802,7 +804,7 @@ def server_command(
                 '--presence-penalty',
                 '1.5',
             ]
-            eff = 'none'
+            template_kwargs = {'enable_thinking': False}
         else:
             args += [
                 '--temp',
@@ -814,7 +816,7 @@ def server_command(
                 '--min-p',
                 '0',
             ]
-            eff = effort or 'xhigh'
+            template_kwargs = {'reasoning_effort': effort or 'xhigh'}
         allowed = QWEN_EFFORTS
     else:
         args += [
@@ -824,13 +826,14 @@ def server_command(
             '0.95',
             '--kv-unified',
         ]  # --kv-unified: GLM multi-seq
-        eff = effort or 'max'
+        template_kwargs = {'reasoning_effort': effort or 'max'}
         allowed = GLM_EFFORTS
-    if eff not in allowed:
+    eff = template_kwargs.get('reasoning_effort')
+    if eff is not None and eff not in allowed:
         raise typer.BadParameter(
             f'effort for {model} must be one of {sorted(allowed)}'
         )
-    args += ['--chat-template-kwargs', f'{{"reasoning_effort":"{eff}"}}']
+    args += ['--chat-template-kwargs', json.dumps(template_kwargs)]
 
     if not paging:
         args += ['-lm', 'mlock']
@@ -888,8 +891,11 @@ def tune(
     ] = None,
     quant: Annotated[Optional[str], typer.Option()] = None,
     depth: Annotated[
-        str, typer.Option(help='context depths to test at')
-    ] = '0,8192',
+        Optional[str],
+        typer.Option(
+            help='context depths to test at [0 and the serving context]'
+        ),
+    ] = None,
     dry_run: bool = False,
 ) -> Optional[int]:
     """Sweep with llama-bench around values estimated from the model file and VRAM.
@@ -931,11 +937,11 @@ def tune(
         '-lm',
         'none',
         '-p',
-        '2048',
+        str(PROMPT),
         '-n',
-        '128',
+        str(GENERATE),
         '-d',
-        depth,
+        depth or f'0,{p.ctx - PROMPT - GENERATE}',
         '-r',
         '2',
         '-o',
@@ -959,10 +965,24 @@ def tune(
     rows: list[tuple[int, dict[str, float]]] = []
     for v in vals:
         extra = {
-            Sweep.threads: ['-t', str(v)],
+            Sweep.threads: [
+                '-t',
+                str(v),
+                '-ub',
+                str(UBATCH),
+                '-b',
+                str(UBATCH),
+            ],
             Sweep.ubatch: ['-t', str(pl.threads), '-ub', str(v), '-b', '4096'],
         }
-        cmd = base + placement(v) + extra.get(sweep, ['-t', str(pl.threads)])
+        cmd = (
+            base
+            + placement(v)
+            + extra.get(
+                sweep,
+                ['-t', str(pl.threads), '-ub', str(UBATCH), '-b', str(UBATCH)],
+            )
+        )
         if dry_run:
             typer.echo(' '.join(cmd))
             continue
