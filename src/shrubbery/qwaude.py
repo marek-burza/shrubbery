@@ -9,7 +9,7 @@ llm probe                  show detected GPU/VRAM/RAM/CPU and the derived settin
 llm get flash              download the best quant of a model that fits this box
 llm check flash            preflight: will it run without paging?
 llm serve flash            OpenAI-compatible server on 127.0.0.1:8080
-llm tune moe flash         llama-bench sweep around an estimate from the model file
+llm tune moe flash         llama bench sweep around an estimate from the model file
 llm code flash             all of the above, then an agent (opencode or claude) on the server
 """
 
@@ -392,16 +392,16 @@ def first_shard(p: Preset, q: Quant) -> Path:
     return files[0]
 
 
-def need_binary(name: str, dry_run: bool = False) -> str:
-    b = shutil.which(name)
+def need_llama(command: str, dry_run: bool = False) -> list[str]:
+    b = shutil.which('llama')
     if b is None and not dry_run:
         typer.secho(
-            f'Missing {name} on PATH: the Dockerfile builds and installs llama.cpp',
+            'Missing llama on PATH: the Dockerfile installs it from llama.app',
             fg='red',
             err=True,
         )
         raise typer.Exit(1)
-    return b or name
+    return [b or 'llama', command]
 
 
 # =========================================================================== GGUF metadata
@@ -695,7 +695,7 @@ def serve(
         bool, typer.Option(help="print the command, don't run it")
     ] = False,
 ) -> None:
-    """Launch llama-server sized for this machine. Extra args after `--` go to llama-server."""
+    """Launch llama-server sized for this machine. Extra args after `--` go to llama serve."""
     args = server_command(
         model,
         quant,
@@ -740,7 +740,7 @@ def server_command(
     hw, pl, p = probe_hw(), plan(), preset_or_die(model)
     q = resolve_quant(p, quant, downloaded_only=True)
     gguf = first_shard(p, q)
-    server = need_binary('llama-server', dry_run)
+    server = need_llama('serve', dry_run)
 
     if not paging and quant_size(p, q) > pl.budget:
         typer.secho(
@@ -752,7 +752,7 @@ def server_command(
         raise typer.Exit(1)
 
     args: list[str] = [
-        server,
+        *server,
         '-m',
         str(gguf),
         '--alias',
@@ -898,7 +898,7 @@ def tune(
     ] = None,
     dry_run: bool = False,
 ) -> Optional[int]:
-    """Sweep with llama-bench around values estimated from the model file and VRAM.
+    """Sweep with llama bench around values estimated from the model file and VRAM.
 
     Each value runs separately, so an out-of-memory at one value doesn't stop the sweep.
     Then pin the winner: `llm serve flash --ncmoe N` or `llm serve 27b --ngl N`.
@@ -927,9 +927,9 @@ def tune(
     label, vals = sweep_values(sweep, shape)
     if values:
         vals = [int(v) for v in values.split(',')]
-    bench = need_binary('llama-bench', dry_run)
+    bench = need_llama('bench', dry_run)
     base = [
-        bench,
+        *bench,
         '-m',
         str(first_shard(p, q)),
         '-fa',
@@ -1149,7 +1149,7 @@ def code(
         bool,
         typer.Option(
             '--tune/--no-tune',
-            help='llama-bench the GPU placement before serving',
+            help='llama bench the GPU placement before serving',
         ),
     ] = True,
 ) -> None:
