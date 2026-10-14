@@ -2,9 +2,17 @@
 
 Shrubbery is a repo where I experiment with learning about financial markets and Numerai and how to apply machine learning and AI agents to these topics. GPU-accelerated models are used here also in the context of expanding knowledge/skills related to AI/ML engineering.
 
-Notes:
+[Numerai](https://numer.ai/) is a hedge fund where stock market trades are determined based on predictions crowdsourced from data scientists given anonymized financial data.
 
-- Numerai is a hedge fund where trades are determined based on predictions crowdsourced from data scientists given anonymized data. , era-aware time series processing.
+Other interesting sources for experiments (note to human operator: stay clear of US-based competition sponsors):
+
+- [Sovereign Tech Agency](https://www.sovereign.tech/)
+- [CrunchDAO](https://hub.crunchdao.com/competitions)
+- [Codabench](https://www.codabench.org/)
+- [AIcrowd](https://www.aicrowd.com/)
+- [Grand Challenge](https://grand-challenge.org/)
+- [Trustii.io](https://www.trustii.io/)
+- [Kelvins](https://kelvins.esa.int/)
 
 ## Living Document
 
@@ -45,6 +53,13 @@ All models also run automatically via cron (see `tournament.cron`) Tuesday-Satur
 ```bash
 /bin/sh .github/workflows/linter.sh
 ```
+
+### Numerai Workspace
+
+The `workspace/` directory (git-ignored) contains:
+- `data/` - cached Numerai parquet files
+- `models/` - serialized trained models
+- `logs/` - training and inference logs
 
 ## Architecture
 
@@ -98,7 +113,6 @@ All models also run automatically via cron (see `tournament.cron`) Tuesday-Satur
 To run the code create `.env` script which sets the necessary environment variables:
 
 - `NUMERAI_PUBLIC_ID` & `NUMERAI_SECRET_KEY` - Numerai API credentials
-- `NUMERAI_MODEL` - name of the model for submissions of predictions 
 - `SHRUBBERY_KEY` - key of the `shrubbery-notes` store, created with `openssl rand -base64 32`; back it up separately from `data/` (e.g. in a password manager), it cannot be regenerated and without it the notes are lost
 - `OPENFIGI_API_KEY` - optional, raises the OpenFIGI rate limit of `financial-semantics resolve`
 
@@ -129,18 +143,6 @@ Profiling Memory:
 uv run --with memray python -m memray run -o output.bin -m shrubbery.numerai.main --model <model> --retrain
 uv run --with memray python -m memray flamegraph output.bin
 ```
-
-## Branch-off Options
-
-- [Sovereign Tech Agency](https://www.sovereign.tech/)
-- [CrunchDAO](https://hub.crunchdao.com/competitions)
-- [Codabench](https://www.codabench.org/)
-- [AIcrowd](https://www.aicrowd.com/)
-- [Grand Challenge](https://grand-challenge.org/)
-- [Trustii.io](https://www.trustii.io/)
-- [Kelvins](https://kelvins.esa.int/)
-
-Note: Stay clear of US-based competition sponsors.
 
 ## Other
 
