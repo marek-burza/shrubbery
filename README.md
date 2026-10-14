@@ -144,3 +144,17 @@ Note: Stay clear of US-based competition sponsors.
 
 - [Gloomberb - Open-source finance terminal](https://github.com/gloom-sh/gloomberb)
 - [Toast 1 - specialized search agent for financial analysis](https://www.mixedbread.com/blog/toast-1)
+
+## Useful Commands (intended for human operator)
+
+Browsing numerai logs:
+
+```shell
+less +G $(find workspace/logs/ -name '*log' | sort | fzf --tac --preview 'cat {} | grep Name\: ; cat {} | grep Ensemble\: ; tail -n 36 {}')
+```
+
+Browsing notes:
+
+```shell
+shrubbery-notes list | fzf --preview 'shrubbery-notes show {1}' --preview-window right:60%:wrap
+```

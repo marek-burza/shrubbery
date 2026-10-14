@@ -11,7 +11,9 @@ RUN apt-get -yq update && \
         build-essential \
         cmake \
         curl \
+        fzf \
         git \
+        git-lfs \
         libasound2-plugins \
         libnvidia-compute-595-server \
         ncurses-bin \
@@ -25,7 +27,9 @@ RUN apt-get -yq update && \
 # build-essential - N/A
 # cmake - lightgbm (older, non-wheel version)
 # curl - Claude Code
+# fzf - N/A
 # git - N/A
+# git-lfs - N/A
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
 # libnvidia-compute-595-server - lightgbm
 # ncurses-bin - Claude Code
