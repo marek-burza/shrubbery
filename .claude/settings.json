@@ -3,29 +3,5 @@
     "commit": "",
     "pr": "",
     "sessionUrl": false
-  },
-  "hooks": {
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/usr/bin/pw-cat --playback .claude/complete.flac"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/usr/bin/pw-cat --playback .claude/complete.flac"
-          }
-        ]
-      }
-    ]
   }
 }
