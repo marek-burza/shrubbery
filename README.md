@@ -110,6 +110,10 @@ The `workspace/` directory (git-ignored) contains:
 
 - Financial market experiments can use the `QuantLib`, `skfolio` & `quantstats` to not reinvent the code from scratch.
 
+## MCP
+
+- [Numerai MCP](https://docs.numer.ai/numerai-tournament/api#numerai-mcp)
+
 ## Environment Variables (`.env`)
 
 To run the code create `.env` script which sets the necessary environment variables:
