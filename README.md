@@ -77,6 +77,8 @@ The `workspace/` directory (git-ignored) contains:
 
 **Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters), `scores.py` (the `numerai-scores` tool, see Tools).
 
+**Models**: The models (`scikit-learn`-compatible regressors) evolve frequently - ensemble models (e.g. `LightGBM`, `XGBoost`, `Random Forest`, `ResNet`, `FNN`, `Wide & Deep`) get added/removed and are subject to hyperparameter tuning, embedder strategies change (e.g. concatenation of embeddings to features), feature exposure neutralization, shared configuration drifts. 
+
 ### Financial Experiments (`src/shrubbery/financial/`)
 
 - `market_neutral.py`: removes the S&P 500 correlated component from a series and tests the remaining trend (`uv run python -m shrubbery.financial.market_neutral --help`)
