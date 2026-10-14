@@ -51,7 +51,7 @@ class NumeraiRunner:
     def model_pickle_file(self) -> Path:
         model_directory_path = Path('./workspace') / SUBDIRECTORY_MODELS
         model_directory_path.mkdir(parents=True, exist_ok=True)
-        return model_directory_path / f'model_{self.numerai_model_id}.pkl'
+        return model_directory_path / f'{self.numerai_model_id}.pkl'
 
     def load_estimator(self) -> Any:
         logger.info(f'Loading estimator from {self.model_script_file}')
