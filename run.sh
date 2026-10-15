@@ -32,6 +32,7 @@ run() {
     -v $HOME/.claude:/home/user/.claude \
     -v $HOME/.cache/huggingface:/home/user/.cache/huggingface \
     -v $HOME/.config/opencode:/home/user/.config/opencode \
+    -v $HOME/.config/anthropic:/home/user/.config/anthropic \
     -v $PWD:/home/user/workspace \
     -w /home/user/workspace \
     --entrypoint /bin/bash \
