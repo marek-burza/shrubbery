@@ -4,6 +4,7 @@ import traceback
 from pathlib import Path
 from typing import Annotated, Any
 
+import pandas as pd
 import typer
 
 from shrubbery.numerai.constants import (
@@ -38,10 +39,12 @@ class NumeraiRunner:
         numerai_model_id: str,
         feature_set_name: str,
         retrain: bool,
+        full: bool,
     ) -> None:
         self.numerai_model_id = numerai_model_id
         self.feature_set_name = feature_set_name
         self.retrain = retrain
+        self.full = full
 
     @property
     def model_script_file(self) -> Path:
@@ -60,6 +63,22 @@ class NumeraiRunner:
         )
         return name_space['ESTIMATOR']
 
+    def read_training_data(
+        self, feature_names: list[str], target_names: list[str]
+    ) -> pd.DataFrame:
+        columns = [COLUMN_ERA, *feature_names, *target_names]
+        train = read_numerai_parquet('train.parquet', columns)
+        if not self.full:
+            return train
+        validation = read_numerai_parquet(
+            'validation.parquet', columns
+        ).dropna(subset=target_names)
+        logger.info(
+            f'Training on train ({len(train)} rows) and '
+            f'validation ({len(validation)} rows with targets)'
+        )
+        return pd.concat([train, validation])
+
     def train_model(
         self, feature_names: list[str], target_names: list[str]
     ) -> NumeraiModel:
@@ -67,10 +86,7 @@ class NumeraiRunner:
         model = NumeraiModel(
             self.load_estimator(), feature_names, target_names
         ).fit(
-            read_numerai_parquet(
-                'train.parquet',
-                [COLUMN_ERA, *feature_names, *target_names],
-            ),
+            self.read_training_data(feature_names, target_names),
             read_numerai_parquet('train_benchmark_models.parquet'),
         )
         store_model(model, self.model_pickle_file)
@@ -136,11 +152,18 @@ def main(
     feature_set_name: Annotated[
         str, typer.Option(help='Name of the Numerai feature set')
     ] = 'small',
+    full: Annotated[
+        bool,
+        typer.Option(
+            '--full', help='Train on training and validation data'
+        ),
+    ] = False,
 ) -> None:
     NumeraiRunner(
         numerai_model_id=model,
         feature_set_name=feature_set_name,
         retrain=retrain,
+        full=full,
     ).run()
 
 

@@ -189,7 +189,7 @@ def test_runner_derives_both_paths_from_the_model_name(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    runner = NumeraiRunner('faint', 'small', retrain=False)
+    runner = NumeraiRunner('faint', 'small', retrain=False, full=False)
     assert runner.model_script_file == Path('faint.py')
     assert runner.model_pickle_file == Path('workspace/models/faint.pkl')
 
