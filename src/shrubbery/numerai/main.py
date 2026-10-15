@@ -154,9 +154,7 @@ def main(
     ] = 'small',
     full: Annotated[
         bool,
-        typer.Option(
-            '--full', help='Train on training and validation data'
-        ),
+        typer.Option('--full', help='Train on training and validation data'),
     ] = False,
 ) -> None:
     NumeraiRunner(
