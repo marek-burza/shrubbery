@@ -133,10 +133,13 @@ def main(
     retrain: Annotated[
         bool, typer.Option('--retrain', help='Use this flag to retrain')
     ] = False,
+    feature_set_name: Annotated[
+        str, typer.Option(help='Name of the Numerai feature set')
+    ] = 'small',
 ) -> None:
     NumeraiRunner(
         numerai_model_id=model,
-        feature_set_name='small',
+        feature_set_name=feature_set_name,
         retrain=retrain,
     ).run()
 
