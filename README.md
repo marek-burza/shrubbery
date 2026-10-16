@@ -6,9 +6,7 @@ Shrubbery is a repo where I experiment with learning about financial markets and
 
 Other interesting sources for experiments (note to human operator: stay clear of US-based competition sponsors):
 
-- [CrunchDAO](https://hub.crunchdao.com/competitions)
 - [Codabench](https://www.codabench.org/)
-- [AIcrowd](https://www.aicrowd.com/)
 
 ## Living Document
 
