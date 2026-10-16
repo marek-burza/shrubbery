@@ -4,11 +4,6 @@ Shrubbery is a repo where I experiment with learning about financial markets and
 
 [Numerai](https://numer.ai/) is a hedge fund where stock market trades are determined based on predictions crowdsourced from data scientists given anonymized financial data.
 
-Other interesting sources for experiments (note to human operator: stay clear of US-based competition sponsors):
-
-- [Codabench](https://www.codabench.org/)
-- [AI Crowd](https://www.aicrowd.com/)
-
 ## Living Document
 
 This file provides guidance to the user and coding agent when working with code in this repository.
