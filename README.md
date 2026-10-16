@@ -6,13 +6,9 @@ Shrubbery is a repo where I experiment with learning about financial markets and
 
 Other interesting sources for experiments (note to human operator: stay clear of US-based competition sponsors):
 
-- [Sovereign Tech Agency](https://www.sovereign.tech/)
 - [CrunchDAO](https://hub.crunchdao.com/competitions)
 - [Codabench](https://www.codabench.org/)
 - [AIcrowd](https://www.aicrowd.com/)
-- [Grand Challenge](https://grand-challenge.org/)
-- [Trustii.io](https://www.trustii.io/)
-- [Kelvins](https://kelvins.esa.int/)
 
 ## Living Document
 
