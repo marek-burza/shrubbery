@@ -39,7 +39,7 @@ dependencies = [
     "tabulate>=0.10.0",
     "torch>=2.14.1",
     "tqdm>=4.70.1",
-    "typer>=0.20.0",
+    "typer>=0.27.3",
     "xgboost>=3.4.0",
     "yfinance>=0.2.66",
 ]
