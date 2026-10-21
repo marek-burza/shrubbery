@@ -18,7 +18,7 @@ jobs:
           /bin/sh .github/workflows/linter.sh
       - name: Testing
         run: |
-          uv run pytest tests
+          uv run --extra dev pytest tests
       - name: Tags
         id: tags
         run: |

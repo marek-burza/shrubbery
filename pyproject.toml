@@ -51,7 +51,7 @@ financial-semantics = "shrubbery.financial.semantics:app"
 shrubbery-notes = "shrubbery.notes:app"
 shrubbery-qwaude = "shrubbery.qwaude:app"
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pdbpp>=0.12.1", # Extension of Python debugger
     "pytest>=9.0.2", # Test runner
@@ -84,8 +84,3 @@ line-length = 79
 
 [tool.ruff.format]
 quote-style = "single"
-
-[tool.deptry.per_rule_ignores]
-# `trader.py` is a standalone PEP 723 script that carries its own inline
-# tests, so it imports `pytest` while `pytest` stays a dev dependency.
-DEP004 = [ "pytest" ]

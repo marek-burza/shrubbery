@@ -69,7 +69,7 @@ ENV PATH="$PATH:$VIRTUAL_ENV/bin:$HOME/.local/bin:$HOME/.opencode/bin"
 
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    /bin/uv sync --active --frozen --no-dev --no-install-project
+    /bin/uv sync --active --frozen --no-install-project
 COPY --chown=$USER:$USER . /app/shrubbery
 RUN /bin/uv pip install --python $VIRTUAL_ENV "/app/shrubbery[dev]" && \
     rm -rf /app/shrubbery
