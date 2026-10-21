@@ -55,7 +55,7 @@ The `workspace/` directory (git-ignored) contains:
 
 ### Numerai Pipeline (`src/shrubbery/numerai/`)
 
-**Entry point**: `main.py` - `numerai-run --model <model>` hands the model name to `NumeraiRunner`, which derives both of its paths from it: the script `<model>.py` in the current directory and the artifact `workspace/models/<model>.pkl`. The two modes do not overlap. With `--retrain` it loads `ESTIMATOR` from the script, resolves the feature and target names, fits, and stores it as an artifact. Without `--retrain` it loads the artifact and never reads the script. Either way it then submits tournament predictions and validation diagnostics.
+**Entry point**: `main.py` - `numerai-run --model <model>` hands the model name to `NumeraiRunner`, which derives both of its paths from it: the script `<model>.py` in the current directory and the artifact `workspace/models/<model>.pkl`. The two modes do not overlap. With `--retrain` it loads `ESTIMATOR` from the script, resolves the feature and target names, fits, and stores it as an artifact. Without `--retrain` it loads the artifact and never reads the script. Either way it then submits tournament predictions, and with `--diagnose` also validation diagnostics.
 
 **Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `unpack_numerai_features` decodes the int8 features and prepends the era as the first column.
 

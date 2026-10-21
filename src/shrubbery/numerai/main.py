@@ -40,11 +40,13 @@ class NumeraiRunner:
         feature_set_name: str,
         retrain: bool,
         full: bool,
+        diagnose: bool,
     ) -> None:
         self.numerai_model_id = numerai_model_id
         self.feature_set_name = feature_set_name
         self.retrain = retrain
         self.full = full
+        self.diagnose = diagnose
 
     @property
     def model_script_file(self) -> Path:
@@ -102,6 +104,8 @@ class NumeraiRunner:
             ),
             self.numerai_model_id,
         )
+        if not self.diagnose:
+            return
         gc.collect()
         try:
             submit_diagnostic_predictions(
@@ -149,6 +153,12 @@ def main(
     retrain: Annotated[
         bool, typer.Option('--retrain', help='Use this flag to retrain')
     ] = False,
+    diagnose: Annotated[
+        bool,
+        typer.Option(
+            '--diagnose', help='Submit validation diagnostic predictions'
+        ),
+    ] = False,
     feature_set_name: Annotated[
         str, typer.Option(help='Name of the Numerai feature set')
     ] = 'small',
@@ -161,6 +171,7 @@ def main(
         numerai_model_id=model,
         feature_set_name=feature_set_name,
         retrain=retrain,
+        diagnose=diagnose,
         full=full,
     ).run()
 
