@@ -20,7 +20,7 @@ def locate_numerai_file(file_name: str) -> Path:
 def download_file(file_name: str) -> None:
     file_path = locate_numerai_file(file_name)
     logger.info(f'Downloading {file_name} to {file_path}')
-    napi.download_dataset(f'v5.3/{file_name}', str(file_path))
+    napi.download_dataset(f'v6.0/{file_name}', str(file_path))
     if file_name.endswith('.parquet'):
         length = len(pd.read_parquet(file_path, columns=[]))
         logger.info(f'File {file_name} has {length} rows')
