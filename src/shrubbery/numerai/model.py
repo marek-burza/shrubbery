@@ -14,9 +14,10 @@ def unpack_numerai_features(
     # https://forum.numer.ai/t/rain-data-release/6657
     features = data[feature_names].to_numpy(dtype=np.float32, na_value=np.nan)
     features /= 4.0
-    eras = np.where(
-        data[COLUMN_ERA] == 'X', np.finfo(np.float32).max, data[COLUMN_ERA]
-    ).astype(np.float32)
+    eras = (
+        (pd.to_datetime(data[COLUMN_ERA]) - pd.Timestamp(0))
+        // pd.Timedelta(weeks=1)
+    ).to_numpy(dtype=np.float32)
     return np.column_stack((eras, features))
 
 
@@ -38,8 +39,11 @@ class NumeraiModel:
         features_and_targets: pd.DataFrame,
         benchmark_models: pd.DataFrame,
     ) -> Self:
+        feature_names = [
+            name for name in self.feature_names if name != 'feature_country'
+        ]
         self.estimator.fit(
-            unpack_numerai_features(features_and_targets, self.feature_names),
+            unpack_numerai_features(features_and_targets, feature_names),
             features_and_targets[self.target_names].to_numpy(),
         )
         return self
@@ -49,8 +53,11 @@ class NumeraiModel:
         features: pd.DataFrame,
         benchmark_models: pd.DataFrame,
     ) -> pd.DataFrame:
+        feature_names = [
+            name for name in self.feature_names if name != 'feature_country'
+        ]
         prediction = self.estimator.predict(
-            unpack_numerai_features(features, self.feature_names)
+            unpack_numerai_features(features, feature_names)
         )
         return pd.DataFrame(
             {COLUMN_PREDICTION: np.ravel(prediction)}, index=features.index

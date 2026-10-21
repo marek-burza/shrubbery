@@ -58,7 +58,7 @@ def make_frame(eras: list[str], rows_per_era: int = 20) -> pd.DataFrame:
 
 
 def make_model(estimator: Any = None) -> NumeraiModel:
-    frame = make_frame(['0001', '0002'])
+    frame = make_frame(['2018-12-21', '2018-12-28'])
     return NumeraiModel(
         estimator if estimator is not None else PerEraRanker(),
         FEATURE_NAMES,
@@ -67,7 +67,7 @@ def make_model(estimator: Any = None) -> NumeraiModel:
 
 
 def live_frame() -> pd.DataFrame:
-    frame = make_frame(['X'])
+    frame = make_frame(['2026-10-20'])
     return frame.drop(columns=['target'])
 
 
@@ -114,17 +114,17 @@ def test_estimator_receives_the_era_as_the_first_column() -> None:
             self.seen_ = x
             return np.zeros(len(x))
 
-    frame = make_frame(['0001', '0002']).drop(columns=['target'])
+    frame = make_frame(['2018-12-21', '2018-12-28']).drop(columns=['target'])
     model = NumeraiModel(Recorder(), FEATURE_NAMES, ['target'])
     model.predict(frame, pd.DataFrame())
     eras = model.estimator.seen_[:, COLUMN_INDEX_ERA]
     assert model.estimator.seen_.shape == (40, len(FEATURE_NAMES) + 1)
-    assert sorted(np.unique(eras).tolist()) == [1.0, 2.0]
-    assert (eras == 1.0).sum() == 20
+    assert sorted(np.unique(eras).tolist()) == [2555.0, 2556.0]
+    assert (eras == 2555.0).sum() == 20
 
 
 def test_prediction_ranks_within_era_not_across_eras() -> None:
-    frame = make_frame(['0001', '0002']).drop(columns=['target'])
+    frame = make_frame(['2018-12-21', '2018-12-28']).drop(columns=['target'])
     prediction = make_model().predict(frame, pd.DataFrame())
     per_era = prediction[COLUMN_PREDICTION].groupby(
         frame[COLUMN_ERA].to_numpy()
@@ -134,14 +134,20 @@ def test_prediction_ranks_within_era_not_across_eras() -> None:
     assert per_era.min().lt(0.1).all()
 
 
-def test_live_era_matches_its_numeric_substitute() -> None:
-    model = make_model()
-    symbolic = live_frame()
-    numeric = symbolic.copy()
-    numeric[COLUMN_ERA] = np.finfo(np.float32).max
-    assert model(symbolic, pd.DataFrame()).equals(
-        model(numeric, pd.DataFrame())
-    )
+def test_live_era_follows_the_training_eras() -> None:
+    class Recorder(BaseEstimator, RegressorMixin):
+        def fit(self, x: np.ndarray, y: np.ndarray) -> 'Recorder':
+            return self
+
+        def predict(self, x: np.ndarray) -> np.ndarray:
+            self.seen_ = x
+            return np.zeros(len(x))
+
+    model = NumeraiModel(Recorder(), FEATURE_NAMES, ['target'])
+    model.predict(live_frame(), pd.DataFrame())
+    assert np.unique(model.estimator.seen_[:, COLUMN_INDEX_ERA]).tolist() == [
+        2963.0
+    ]
 
 
 def test_missing_artifact_is_an_error_not_a_training_run(
@@ -254,7 +260,7 @@ print('ok')
 def test_gpu_fitted_model_predicts_on_cpu(tmp_path: Path) -> None:
     from xgboost import XGBRegressor
 
-    frame = make_frame(['0001', '0002'])
+    frame = make_frame(['2018-12-21', '2018-12-28'])
     model = NumeraiModel(
         XGBRegressor(device='cuda', n_estimators=10, max_depth=3),
         FEATURE_NAMES,

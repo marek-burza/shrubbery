@@ -57,7 +57,7 @@ The `workspace/` directory (git-ignored) contains:
 
 **Entry point**: `main.py` - `numerai-run --model <model>` hands the model name to `NumeraiRunner`, which derives both of its paths from it: the script `<model>.py` in the current directory and the artifact `workspace/models/<model>.pkl`. The two modes do not overlap. With `--retrain` it loads `ESTIMATOR` from the script, resolves the feature and target names, fits, and stores it as an artifact. Without `--retrain` it loads the artifact and never reads the script. Either way it then submits tournament predictions, and with `--diagnose` also validation diagnostics.
 
-**Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `unpack_numerai_features` decodes the int8 features and prepends the era as the first column.
+**Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `fit` and `predict` leave out `feature_country`, and `unpack_numerai_features` decodes the int8 features and prepends the era (the `date` column) as the first column, as the number of weeks since the Unix epoch.
 
 **Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
 
