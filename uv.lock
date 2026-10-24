@@ -2778,7 +2778,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "skfolio", specifier = ">=1.9.3" },
-    { name = "sklearn-genetic-opt", specifier = ">=0.13.3" },
+    { name = "sklearn-genetic-opt", specifier = ">=0.14.0" },
     { name = "tabulate", specifier = ">=0.10.0" },
     { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cu132" },
     { name = "tqdm", specifier = ">=4.70.1" },
@@ -2819,7 +2819,7 @@ wheels = [
 
 [[package]]
 name = "sklearn-genetic-opt"
-version = "0.13.3"
+version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deap" },
@@ -2828,9 +2828,9 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/5a/27f74d6696f161abdf22665f8bfbfef4d4e61399f81480a569f8356ca6de/sklearn_genetic_opt-0.13.3.tar.gz", hash = "sha256:2d2a8e5a401cf6e7507b6f42316510ba842f2e551a52f55ceda6f29b810625fb", size = 76875, upload-time = "2026-07-07T14:02:47.232Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/68/f595e3f5f5c82643a4dfac7f32889e828e95563323d8aa670d70568ab10b/sklearn_genetic_opt-0.14.0.tar.gz", hash = "sha256:cd0ac5648e0b0b0ea883752d8fbd17469459762e48d0db6fd154d879b013ba23", size = 90281, upload-time = "2026-10-10T22:02:25.576Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/1a/f8e4c7a0fcb06778889be0e8c31f762706fd83c848aa31cd4837116d10dd/sklearn_genetic_opt-0.13.3-py3-none-any.whl", hash = "sha256:d77866102c0158bcf10287ad9aa2941c7e95eb11f82d811e6033ac799a0454b0", size = 79191, upload-time = "2026-07-07T14:02:45.605Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/2e/083ee59e59790723fd5d1fa189f8c55e5752e1efa07f90bcbf004823d350/sklearn_genetic_opt-0.14.0-py3-none-any.whl", hash = "sha256:9ee52edddd5a5e0915eb3c64a94adb726419d880c64a9d04ff24212cd9ec353f", size = 93154, upload-time = "2026-10-10T22:02:24.091Z" },
 ]
 
 [[package]]
