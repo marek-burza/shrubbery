@@ -1,3 +1,4 @@
+import itertools
 import os
 import time
 from datetime import datetime
@@ -53,8 +54,14 @@ def save_prediction(df: pd.DataFrame, name: str) -> Path:
     return prediction_path
 
 
+def upload_attempts(tries: int | None) -> range | itertools.count:
+    return itertools.count() if tries is None else range(tries)
+
+
 def submit_diagnostic_predictions(
-    prediction_data: pd.DataFrame, numerai_model_id: str
+    prediction_data: pd.DataFrame,
+    numerai_model_id: str,
+    tries: int | None = 10,
 ) -> dict[str, float]:
     prediction_name = 'validation'
     prediction_path = save_prediction(prediction_data, prediction_name)
@@ -62,7 +69,7 @@ def submit_diagnostic_predictions(
     for _ in range(3):
         diagnostics_ids = []
         # Upload validation prediction (Scores -> Models -> Run Diagnostics)
-        while True:
+        for _ in upload_attempts(tries):
             try:
                 logger.info('Uploading diagnostic predictions')
                 diagnostics_id = napi.upload_diagnostics(
@@ -87,6 +94,11 @@ def submit_diagnostic_predictions(
             except Exception:
                 logger.exception('Upload failure for diagnostic predictions')
                 time.sleep(10)
+        else:
+            logger.error(
+                f'Gave up uploading diagnostic predictions after {tries} tries'
+            )
+            return {}
         # Fetch diagnostics
         for _ in range(5):
             for diagnostics_id in diagnostics_ids:
@@ -98,6 +110,8 @@ def submit_diagnostic_predictions(
             if diagnostics['status'] == 'done':
                 break
             time.sleep(60)
+        if diagnostics['status'] == 'done':
+            break
     metrics = {}
     if diagnostics['status'] == 'done':
         logger.info('Got diagnostic predictions')
@@ -109,12 +123,12 @@ def submit_diagnostic_predictions(
 
 
 def submit_tournament_predictions(
-    df: pd.DataFrame, numerai_model_id: str
+    df: pd.DataFrame, numerai_model_id: str, tries: int | None = 10
 ) -> None:
     prediction_path = save_prediction(df, f'tournament_{COLUMN_PREDICTION}')
     # Upload validation prediction (Submissions -> Models -> Upload Submission)
     model_id = resolve_numerai_model_id(numerai_model_id)
-    while True:
+    for _ in upload_attempts(tries):
         try:
             logger.info('Submitting tournament predictions')
             napi.upload_predictions(
@@ -138,6 +152,10 @@ def submit_tournament_predictions(
             if 'Are you using the latest live ids' in str(error):
                 break
             time.sleep(10)
+    else:
+        logger.error(
+            f'Gave up submitting tournament predictions after {tries} tries'
+        )
 
 
 napi = numerai_api()
