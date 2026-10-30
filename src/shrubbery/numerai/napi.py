@@ -47,7 +47,11 @@ def resolve_numerai_model_id(model_name: str) -> str:
     return profile['id']
 
 
-def upload_frame(df: pd.DataFrame, id_columns: list[str]) -> pd.DataFrame:
+def save_prediction(
+    df: pd.DataFrame, name: str, id_columns: list[str]
+) -> Path:
+    stamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    name = f'{stamp}_{name}'
     frame = df.rename(columns={COLUMN_PREDICTION: COLUMN_SIGNAL})[
         [*id_columns, COLUMN_SIGNAL]
     ]
@@ -55,15 +59,6 @@ def upload_frame(df: pd.DataFrame, id_columns: list[str]) -> pd.DataFrame:
         raise ValueError(f'Duplicate {id_columns} in predictions')
     if not frame[COLUMN_SIGNAL].between(0, 1).all():
         raise ValueError(f'{COLUMN_SIGNAL} is NaN or outside [0, 1]')
-    return frame
-
-
-def save_prediction(
-    df: pd.DataFrame, name: str, id_columns: list[str]
-) -> Path:
-    stamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    name = f'{stamp}_{name}'
-    frame = upload_frame(df, id_columns)
     with NamedTemporaryFile(
         prefix=f'{name}_', suffix='.csv', delete=False
     ) as prediction_file:
