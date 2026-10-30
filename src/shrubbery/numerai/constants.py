@@ -2,6 +2,7 @@ COLUMN_ERA = 'date'
 COLUMN_FEATURE_PREFIX = 'feature'
 COLUMN_ID = 'numerai_ticker'
 COLUMN_PREDICTION = 'prediction'
+COLUMN_SIGNAL = 'signal'
 COLUMN_INDEX_ERA = 0
 COLUMN_INDEX_TARGET = 0
 COLUMN_TARGET = 'target'

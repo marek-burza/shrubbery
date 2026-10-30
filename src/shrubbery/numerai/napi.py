@@ -9,7 +9,12 @@ import pandas as pd
 import requests
 from numerapi import NumerAPI
 
-from shrubbery.numerai.constants import COLUMN_PREDICTION
+from shrubbery.numerai.constants import (
+    COLUMN_ERA,
+    COLUMN_ID,
+    COLUMN_PREDICTION,
+    COLUMN_SIGNAL,
+)
 from shrubbery.numerai.observability import logger
 
 
@@ -42,15 +47,28 @@ def resolve_numerai_model_id(model_name: str) -> str:
     return profile['id']
 
 
-def save_prediction(df: pd.DataFrame, name: str) -> Path:
+def upload_frame(df: pd.DataFrame, id_columns: list[str]) -> pd.DataFrame:
+    frame = df.rename(columns={COLUMN_PREDICTION: COLUMN_SIGNAL})[
+        [*id_columns, COLUMN_SIGNAL]
+    ]
+    if frame.duplicated(subset=id_columns).any():
+        raise ValueError(f'Duplicate {id_columns} in predictions')
+    if not frame[COLUMN_SIGNAL].between(0, 1).all():
+        raise ValueError(f'{COLUMN_SIGNAL} is NaN or outside [0, 1]')
+    return frame
+
+
+def save_prediction(
+    df: pd.DataFrame, name: str, id_columns: list[str]
+) -> Path:
     stamp = datetime.now().strftime('%Y%m%d%H%M%S')
     name = f'{stamp}_{name}'
-    predictions = df[COLUMN_PREDICTION]
+    frame = upload_frame(df, id_columns)
     with NamedTemporaryFile(
         prefix=f'{name}_', suffix='.csv', delete=False
     ) as prediction_file:
         prediction_path = Path(prediction_file.name)
-    predictions.to_csv(prediction_path, index=True)
+    frame.to_csv(prediction_path, index=False)
     return prediction_path
 
 
@@ -64,7 +82,9 @@ def submit_diagnostic_predictions(
     tries: int | None = 10,
 ) -> dict[str, float]:
     prediction_name = 'validation'
-    prediction_path = save_prediction(prediction_data, prediction_name)
+    prediction_path = save_prediction(
+        prediction_data, prediction_name, [COLUMN_ID, COLUMN_ERA]
+    )
     model_id = resolve_numerai_model_id(numerai_model_id)
     for _ in range(3):
         diagnostics_ids = []
@@ -125,7 +145,9 @@ def submit_diagnostic_predictions(
 def submit_tournament_predictions(
     df: pd.DataFrame, numerai_model_id: str, tries: int | None = 10
 ) -> None:
-    prediction_path = save_prediction(df, f'tournament_{COLUMN_PREDICTION}')
+    prediction_path = save_prediction(
+        df, f'tournament_{COLUMN_SIGNAL}', [COLUMN_ID]
+    )
     # Upload validation prediction (Submissions -> Models -> Upload Submission)
     model_id = resolve_numerai_model_id(numerai_model_id)
     for _ in upload_attempts(tries):

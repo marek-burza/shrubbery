@@ -15,11 +15,14 @@ from sklearn.dummy import DummyRegressor
 
 from shrubbery.numerai.constants import (
     COLUMN_ERA,
+    COLUMN_ID,
     COLUMN_INDEX_ERA,
     COLUMN_PREDICTION,
+    COLUMN_SIGNAL,
 )
 from shrubbery.numerai.main import NumeraiRunner
 from shrubbery.numerai.model import NumeraiModel
+from shrubbery.numerai.napi import save_prediction
 from shrubbery.numerai.utilities import load_model, store_model
 
 FEATURE_NAMES = ['feature_a', 'feature_b', 'feature_c']
@@ -49,9 +52,9 @@ def make_frame(eras: list[str], rows_per_era: int = 20) -> pd.DataFrame:
         {
             name: generator.integers(0, 5, rows).astype(np.int8)
             for name in FEATURE_NAMES
-        },
-        index=pd.Index([f'id{row}' for row in range(rows)], name='id'),
+        }
     )
+    frame[COLUMN_ID] = [f'{row:06d} KR' for row in range(rows)]
     frame[COLUMN_ERA] = np.repeat(eras, rows_per_era)
     frame['target'] = generator.random(rows)
     return frame
@@ -103,6 +106,46 @@ def test_prediction_satisfies_the_runner_contract() -> None:
     assert not prediction.empty
     assert not prediction.isna().any().any()
     assert prediction[COLUMN_PREDICTION].between(0, 1).all()
+
+
+def prediction_with_ids(frame: pd.DataFrame) -> pd.DataFrame:
+    prediction = make_model()(frame, pd.DataFrame())
+    return frame[[COLUMN_ID, COLUMN_ERA]].join(prediction)
+
+
+def test_live_upload_has_the_v6_columns() -> None:
+    frame = live_frame()
+    path = save_prediction(prediction_with_ids(frame), 'live', [COLUMN_ID])
+    upload = pd.read_csv(path)
+    assert path.read_text().splitlines()[0] == f'{COLUMN_ID},{COLUMN_SIGNAL}'
+    assert len(upload) == len(frame)
+
+
+def test_diagnostic_upload_has_the_v6_columns() -> None:
+    frame = make_frame(['2018-12-21', '2018-12-28']).drop(columns=['target'])
+    frame[COLUMN_ID] = np.tile(frame[COLUMN_ID][:20], 2)
+    path = save_prediction(
+        prediction_with_ids(frame), 'validation', [COLUMN_ID, COLUMN_ERA]
+    )
+    upload = pd.read_csv(path)
+    assert path.read_text().splitlines()[0] == (
+        f'{COLUMN_ID},{COLUMN_ERA},{COLUMN_SIGNAL}'
+    )
+    assert len(upload) == len(frame)
+
+
+def test_upload_rejects_duplicate_tickers() -> None:
+    frame = live_frame()
+    frame[COLUMN_ID] = 'AAPL US'
+    with pytest.raises(ValueError, match='Duplicate'):
+        save_prediction(prediction_with_ids(frame), 'live', [COLUMN_ID])
+
+
+def test_upload_rejects_a_signal_outside_the_unit_interval() -> None:
+    prediction = prediction_with_ids(live_frame())
+    prediction.loc[0, COLUMN_PREDICTION] = np.nan
+    with pytest.raises(ValueError, match='outside'):
+        save_prediction(prediction, 'live', [COLUMN_ID])
 
 
 def test_estimator_receives_the_era_as_the_first_column() -> None:

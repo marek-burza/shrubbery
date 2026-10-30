@@ -9,6 +9,7 @@ import typer
 
 from shrubbery.numerai.constants import (
     COLUMN_ERA,
+    COLUMN_ID,
     SUBDIRECTORY_MODELS,
 )
 from shrubbery.numerai.ingest import (
@@ -94,14 +95,21 @@ class NumeraiRunner:
         store_model(model, self.model_pickle_file)
         return model
 
+    def predict_with_ids(
+        self, model: NumeraiModel, feature_names: list[str], data_name: str
+    ) -> pd.DataFrame:
+        features = read_numerai_parquet(
+            f'{data_name}.parquet', [COLUMN_ID, COLUMN_ERA, *feature_names]
+        )
+        prediction = model(
+            features,
+            read_numerai_parquet(f'{data_name}_benchmark_models.parquet'),
+        )
+        return features[[COLUMN_ID, COLUMN_ERA]].join(prediction)
+
     def submit(self, model: NumeraiModel, feature_names: list[str]) -> None:
         submit_tournament_predictions(
-            model(
-                read_numerai_parquet(
-                    'live.parquet', [COLUMN_ERA, *feature_names]
-                ),
-                read_numerai_parquet('live_benchmark_models.parquet'),
-            ),
+            self.predict_with_ids(model, feature_names, 'live'),
             self.numerai_model_id,
         )
         if not self.diagnose:
@@ -109,15 +117,7 @@ class NumeraiRunner:
         gc.collect()
         try:
             submit_diagnostic_predictions(
-                model.predict(
-                    read_numerai_parquet(
-                        'validation.parquet',
-                        [COLUMN_ERA, *feature_names],
-                    ),
-                    read_numerai_parquet(
-                        'validation_benchmark_models.parquet'
-                    ),
-                ),
+                self.predict_with_ids(model, feature_names, 'validation'),
                 self.numerai_model_id,
             )
         except MemoryError:
