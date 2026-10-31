@@ -554,7 +554,7 @@ nvvm = [
 
 [[package]]
 name = "cudf-cu13"
-version = "26.10.0"
+version = "26.10.2"
 source = { registry = "https://pypi.nvidia.com/" }
 dependencies = [
     { name = "cachetools" },
@@ -575,8 +575,8 @@ dependencies = [
     { name = "rmm-cu13" },
 ]
 wheels = [
-    { url = "https://pypi.nvidia.com/cudf-cu13/cudf_cu13-26.10.0-cp311-abi3-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:18192f45c421d2df73f3b0d8db767bbb5ed16ccb7df7d810ac7f00388edaedb3" },
-    { url = "https://pypi.nvidia.com/cudf-cu13/cudf_cu13-26.10.0-cp311-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0d2d14cadc8d28057ff535aeb072c4f0e3e2b1be95658f771c82ae13aa5a00cc" },
+    { url = "https://pypi.nvidia.com/cudf-cu13/cudf_cu13-26.10.2-cp311-abi3-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ab444d431c7de2996cdc09dd7ecf609e877192be8f5d2eceb3fe901e917bd652" },
+    { url = "https://pypi.nvidia.com/cudf-cu13/cudf_cu13-26.10.2-cp311-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b46d7d4124150c2153346b04e1b4d7e2ff953aa711c44503025a6b36a095f51a" },
 ]
 
 [[package]]
@@ -2753,7 +2753,7 @@ dev = [
 requires-dist = [
     { name = "catboost", specifier = ">=1.2.10" },
     { name = "cloudpickle", specifier = ">=3.1.2" },
-    { name = "cudf-cu13", specifier = ">=26.8.1" },
+    { name = "cudf-cu13", specifier = ">=26.10.2" },
     { name = "cuml-cu13", specifier = ">=25.10.0" },
     { name = "deptry", marker = "extra == 'dev'", specifier = ">=0.25.1" },
     { name = "huggingface-hub", specifier = ">=2.2.0" },
