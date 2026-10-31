@@ -2777,7 +2777,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.17.1" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.17.1" },
-    { name = "skfolio", specifier = ">=1.9.3" },
+    { name = "skfolio", specifier = ">=1.10.3" },
     { name = "sklearn-genetic-opt", specifier = ">=0.14.0" },
     { name = "tabulate", specifier = ">=0.10.0" },
     { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cu132" },
@@ -2801,7 +2801,7 @@ wheels = [
 
 [[package]]
 name = "skfolio"
-version = "1.9.3"
+version = "1.10.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "clarabel" },
@@ -2812,9 +2812,9 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a4/10/640d15f4da241a14d460a8b755f25c64f49d68ec823ca2c3a20e494fe515/skfolio-1.9.3.tar.gz", hash = "sha256:348a30ace55190c6789124f11c85361886b632bdfecd4da5edf5fa8972ffae2d", size = 1245585, upload-time = "2026-10-16T21:12:53.696Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/7e/1678d239bcb5ca58503cde8079782956f9be8e93813cd26382d0b0080743/skfolio-1.10.3.tar.gz", hash = "sha256:285cbe94ed0f0df632ca7013a12334c7d87462061f36e1c866d13b5863356f8a", size = 1252106, upload-time = "2026-10-23T21:44:31.651Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/ca/9458392f522e9f70c3a8a1c836282403de4a7baddcee0be40ec6ec8d09c9/skfolio-1.9.3-py3-none-any.whl", hash = "sha256:05842bc697cc4f8efc99bb573eaad50b40403a3fcc3d69efe3954b2920c7f735", size = 1456874, upload-time = "2026-10-16T21:12:51.778Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/97/a043fc3c42dc8b668d5082a3294cb3628f307e500483bd054e2a00608f3a/skfolio-1.10.3-py3-none-any.whl", hash = "sha256:807816173a60572376201f2712ce03d9f692549bd6d9b49bcea15ca10480bc0d", size = 1463392, upload-time = "2026-10-23T21:44:29.464Z" },
 ]
 
 [[package]]
