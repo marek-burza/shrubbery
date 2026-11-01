@@ -182,8 +182,7 @@ def summarize_scores(scores: pd.DataFrame) -> pd.DataFrame:
         ['model', 'round', 'metric'], keep='last'
     )
     grouped = latest.groupby(['model', 'metric'])
-    summary = grouped['value'].agg(['count', 'mean', 'std'])
-    summary = summary.rename(columns={'count': 'n'})
+    summary = grouped['value'].agg(n='count', mean='mean', std='std')
     summary['sharpe'] = summary['mean'] / summary['std']
     summary['hit_rate'] = grouped['value'].apply(lambda v: (v > 0).mean())
     summary['mean_pct'] = grouped['percentile'].mean()

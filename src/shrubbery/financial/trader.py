@@ -437,7 +437,7 @@ def test_risk_decomposition_identity(_sample: dict[str, pd.Series]) -> None:
 def test_log_returns(_sample: dict[str, pd.Series]) -> None:
     # skfolio's log returns must equal log(P_t / P_{t-1}).
     prices = _make_prices()
-    expected = np.log(prices / prices.shift(1)).dropna()
+    expected = (prices / prices.shift(1)).transform(np.log).dropna()
     pd.testing.assert_frame_equal(prices_to_log_returns(prices), expected)
 
 

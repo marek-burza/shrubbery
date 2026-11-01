@@ -356,8 +356,9 @@ def main(argv: list[str] | None = None) -> int:
             benchmark = load_benchmark_csv(arguments.benchmark_csv)
             benchmark_name = arguments.benchmark_csv
         else:
+            dates = pd.DatetimeIndex(target.index)
             benchmark = fetch_benchmark(
-                arguments.benchmark, target.index.min(), target.index.max()
+                arguments.benchmark, dates[0], dates[-1]
             )
             benchmark_name = arguments.benchmark
         residual, paired, market_fit = neutralize(target, benchmark)
