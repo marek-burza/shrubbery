@@ -21,10 +21,10 @@ Numerai models are executed by the user in a Docker container via shrubbery's `r
 
 ```bash
 # Run model inference
-run.sh --model <model>
+run.sh -c "numerai-run --model <model>"
 
 # Run model training
-run.sh --model <model> --retrain
+run.sh -c "numerai-run --model <model> --retrain"
 ```
 
 Numerai models are executed by the coding agent already inside a container directly via:
