@@ -1,4 +1,5 @@
 import itertools
+import logging
 import os
 import time
 from datetime import datetime
@@ -15,7 +16,8 @@ from shrubbery.numerai.constants import (
     COLUMN_PREDICTION,
     COLUMN_SIGNAL,
 )
-from shrubbery.numerai.observability import logger
+
+logger = logging.getLogger('shrubbery')
 
 
 def numerai_api() -> NumerAPI:

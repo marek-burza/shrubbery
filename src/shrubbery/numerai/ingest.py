@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 from pathlib import Path
 
@@ -7,7 +8,8 @@ import pandas as pd
 
 from shrubbery.numerai.constants import SUBDIRECTORY_DATA
 from shrubbery.numerai.napi import napi
-from shrubbery.numerai.observability import logger
+
+logger = logging.getLogger('shrubbery')
 
 
 def locate_numerai_file(file_name: str) -> Path:

@@ -49,7 +49,7 @@ All models also run automatically via cron (see `tournament.cron`) Tuesday-Satur
 The `workspace/` directory (git-ignored) contains:
 - `data/` - cached Numerai parquet files
 - `models/` - serialized trained models
-- `logs/` - training and inference logs
+- `logs/` - training and inference logs, written by `numerai-run` itself
 
 ## Architecture
 
@@ -65,7 +65,7 @@ The `workspace/` directory (git-ignored) contains:
 
 **Persistence**: `utilities.py` stores and loads the `NumeraiModel` with cloudpickle, registering every loaded `shrubbery.*` module for by-value pickling so the artifact carries its code rather than import paths, and refuses to load anything that is not a `NumeraiModel`.
 
-**Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters), `scores.py` (the `numerai-scores` tool, see Tools).
+**Support**: `constants.py` (column names, random seed), `observability.py` (logger, warning filters, and for `numerai-run` the logging to both the console and a dated `workspace/logs/<YYYYmmddHHMMSS>.log`, with stdout logged at `INFO` and stderr (incl. warnings) at `WARNING` via `LoggerWriter`), `scores.py` (the `numerai-scores` tool, see Tools).
 
 **Models**: The models (`scikit-learn`-compatible regressors) evolve frequently - ensemble models (e.g. `LightGBM`, `XGBoost`, `Random Forest`, `ResNet`, `FNN`, `Wide & Deep`) get added/removed and are subject to hyperparameter tuning, embedder strategies change (e.g. concatenation of embeddings to features), feature exposure neutralization, shared configuration drifts. 
 

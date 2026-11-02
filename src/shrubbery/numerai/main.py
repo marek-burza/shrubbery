@@ -1,4 +1,5 @@
 import gc
+import logging
 import runpy
 import traceback
 from pathlib import Path
@@ -25,13 +26,16 @@ from shrubbery.numerai.napi import (
     submit_tournament_predictions,
 )
 from shrubbery.numerai.observability import (
-    logger,
+    dated_log_file,
+    setup_logger,
     silence_false_positive_warnings,
 )
 from shrubbery.numerai.utilities import (
     load_model,
     store_model,
 )
+
+logger = logging.getLogger('shrubbery')
 
 
 class NumeraiRunner:
@@ -167,6 +171,7 @@ def main(
         typer.Option('--full', help='Train on training and validation data'),
     ] = False,
 ) -> None:
+    setup_logger(dated_log_file())
     NumeraiRunner(
         numerai_model_id=model,
         feature_set_name=feature_set_name,

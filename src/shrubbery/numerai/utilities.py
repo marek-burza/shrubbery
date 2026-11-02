@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -7,7 +8,8 @@ import cloudpickle
 import pandas as pd
 
 from shrubbery.numerai.model import NumeraiModel
-from shrubbery.numerai.observability import logger
+
+logger = logging.getLogger('shrubbery')
 
 
 def loaded_shrubbery_modules() -> list[ModuleType]:

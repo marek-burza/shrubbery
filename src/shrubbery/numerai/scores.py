@@ -1,4 +1,5 @@
 import enum
+import logging
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -13,7 +14,9 @@ from shrubbery.numerai.napi import (
     numerai_models,
     resolve_numerai_model_id,
 )
-from shrubbery.numerai.observability import logger
+from shrubbery.numerai.observability import setup_logger
+
+logger = logging.getLogger('shrubbery')
 
 HELP = """
 Fetch live tournament scores of Numerai models for performance evaluation.
@@ -263,6 +266,7 @@ def main(
 ) -> None:
     if daily and not metrics:
         raise typer.BadParameter('--daily requires at least one --metric')
+    setup_logger()
     names = models or numerai_models()
     logger.info(f'Fetching scores of {len(names)} model(s)')
     with ThreadPoolExecutor(max_workers=4) as executor:

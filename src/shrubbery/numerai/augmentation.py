@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 import numpy as np
@@ -7,7 +8,8 @@ from shrubbery.numerai.constants import (
     COLUMN_ERA,
     COLUMN_INDEX_ERA,
 )
-from shrubbery.numerai.observability import logger
+
+logger = logging.getLogger('shrubbery')
 
 
 def get_biggest_change_features(
