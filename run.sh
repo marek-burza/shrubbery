@@ -36,4 +36,4 @@ podman run \
   -w /home/user/workspace \
   --entrypoint /bin/bash \
   ghcr.io/marek-burza/shrubbery:latest \
-  ${1+-c "$*"}
+  "$@"
