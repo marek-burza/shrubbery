@@ -18,7 +18,6 @@ from shrubbery.numerai.constants import (
     COLUMN_ID,
     COLUMN_INDEX_ERA,
     COLUMN_PREDICTION,
-    COLUMN_SIGNAL,
 )
 from shrubbery.numerai.main import NumeraiRunner
 from shrubbery.numerai.model import NumeraiModel
@@ -117,7 +116,9 @@ def test_live_upload_has_the_v6_columns() -> None:
     frame = live_frame()
     path = save_prediction(prediction_with_ids(frame), 'live', [COLUMN_ID])
     upload = pd.read_csv(path)
-    assert path.read_text().splitlines()[0] == f'{COLUMN_ID},{COLUMN_SIGNAL}'
+    assert (
+        path.read_text().splitlines()[0] == f'{COLUMN_ID},{COLUMN_PREDICTION}'
+    )
     assert len(upload) == len(frame)
 
 
@@ -129,7 +130,7 @@ def test_diagnostic_upload_has_the_v6_columns() -> None:
     )
     upload = pd.read_csv(path)
     assert path.read_text().splitlines()[0] == (
-        f'{COLUMN_ID},{COLUMN_ERA},{COLUMN_SIGNAL}'
+        f'{COLUMN_ID},{COLUMN_ERA},{COLUMN_PREDICTION}'
     )
     assert len(upload) == len(frame)
 
@@ -141,7 +142,7 @@ def test_upload_rejects_duplicate_tickers() -> None:
         save_prediction(prediction_with_ids(frame), 'live', [COLUMN_ID])
 
 
-def test_upload_rejects_a_signal_outside_the_unit_interval() -> None:
+def test_upload_rejects_a_prediction_outside_the_unit_interval() -> None:
     prediction = prediction_with_ids(live_frame())
     prediction.loc[0, COLUMN_PREDICTION] = np.nan
     with pytest.raises(ValueError, match='outside'):

@@ -61,7 +61,7 @@ The `workspace/` directory (git-ignored) contains:
 
 **Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
 
-**Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, saving of predictions to CSV in the shape of Numerai's v6.0 example predictions, with no index and the prediction renamed to `signal` (live: `numerai_ticker,signal`, diagnostics: `numerai_ticker,date,signal`), which raises on duplicate IDs or a `signal` that is NaN or outside `[0, 1]`, and upload of tournament and diagnostic predictions with retries and back-off.
+**Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, saving of predictions to CSV in the shape of Numerai's v6.0 example notebook `hello_numerai.ipynb` (live: `numerai_ticker,prediction`, diagnostics: `numerai_ticker,date,prediction`), which raises on duplicate IDs or a `prediction` that is NaN or outside `[0, 1]`, and upload of tournament and diagnostic predictions with retries and back-off.
 
 **Persistence**: `utilities.py` stores and loads the `NumeraiModel` with cloudpickle, registering every loaded `shrubbery.*` module for by-value pickling so the artifact carries its code rather than import paths, and refuses to load anything that is not a `NumeraiModel`.
 

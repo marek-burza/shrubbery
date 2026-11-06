@@ -14,7 +14,6 @@ from shrubbery.numerai.constants import (
     COLUMN_ERA,
     COLUMN_ID,
     COLUMN_PREDICTION,
-    COLUMN_SIGNAL,
 )
 
 logger = logging.getLogger('shrubbery')
@@ -54,13 +53,11 @@ def save_prediction(
 ) -> Path:
     stamp = datetime.now().strftime('%Y%m%d%H%M%S')
     name = f'{stamp}_{name}'
-    frame = df.rename(columns={COLUMN_PREDICTION: COLUMN_SIGNAL})[
-        [*id_columns, COLUMN_SIGNAL]
-    ]
+    frame = df[[*id_columns, COLUMN_PREDICTION]]
     if frame.duplicated(subset=id_columns).any():
         raise ValueError(f'Duplicate {id_columns} in predictions')
-    if not frame[COLUMN_SIGNAL].between(0, 1).all():
-        raise ValueError(f'{COLUMN_SIGNAL} is NaN or outside [0, 1]')
+    if not frame[COLUMN_PREDICTION].between(0, 1).all():
+        raise ValueError(f'{COLUMN_PREDICTION} is NaN or outside [0, 1]')
     with NamedTemporaryFile(
         prefix=f'{name}_', suffix='.csv', delete=False
     ) as prediction_file:
@@ -143,7 +140,7 @@ def submit_tournament_predictions(
     df: pd.DataFrame, numerai_model_id: str, tries: int | None = 10
 ) -> None:
     prediction_path = save_prediction(
-        df, f'tournament_{COLUMN_SIGNAL}', [COLUMN_ID]
+        df, f'tournament_{COLUMN_PREDICTION}', [COLUMN_ID]
     )
     # Upload validation prediction (Submissions -> Models -> Upload Submission)
     model_id = resolve_numerai_model_id(numerai_model_id)
