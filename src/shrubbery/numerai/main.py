@@ -160,9 +160,10 @@ def main(
     diagnose: Annotated[
         bool,
         typer.Option(
-            '--diagnose', help='Submit validation diagnostic predictions'
+            '--diagnose/--no-diagnose',
+            help='Submit validation diagnostic predictions',
         ),
-    ] = False,
+    ] = True,
     feature_set_name: Annotated[
         str, typer.Option(help='Name of the Numerai feature set')
     ] = 'small',
