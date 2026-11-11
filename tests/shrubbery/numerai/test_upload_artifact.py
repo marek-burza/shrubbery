@@ -235,15 +235,21 @@ def test_inference_uses_the_feature_names_from_the_artifact(
     assert load_model(model_file).feature_names == FEATURE_NAMES
 
 
-def test_runner_derives_both_paths_from_the_model_name(
+def test_runner_derives_its_paths(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
     runner = NumeraiRunner(
-        'faint', 'small', retrain=False, full=False, diagnose=False
+        '20261008111501',
+        'small',
+        retrain=False,
+        full=False,
+        diagnose=False,
     )
-    assert runner.model_script_file == Path('faint.py')
-    assert runner.model_pickle_file == Path('workspace/models/faint.pkl')
+    assert runner.model_script_file == Path('20261008111501.py')
+    assert runner.model_pickle_file == Path(
+        'workspace/models/20261008111501.pkl'
+    )
 
 
 def test_artifact_carries_no_shrubbery_import(tmp_path: Path) -> None:

@@ -74,9 +74,9 @@ values, BMC and a reference model for attribution.
 
 **Examples**:
 
-- `numerai-scores again bail integration_test -m v2_corr20 -m bmc -n 30`
+- `numerai-scores example1 example2 integration_test -m v2_corr20 -m bmc -n 30`
 - `numerai-scores --summary --min-day 20 --since 2026-06-01 -m v2_corr20`
-- `numerai-scores again -m mmc --daily -n 5` (daily snapshot paths)
+- `numerai-scores example1 -m mmc --daily -n 5` (daily snapshot paths)
 - `numerai-scores -m corr60 -m mmc60 --format csv --output scores.csv`
 """
 

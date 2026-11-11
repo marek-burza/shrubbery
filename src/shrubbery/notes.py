@@ -25,6 +25,9 @@ line `summary` and a Markdown `text`. `list` prints one note per line, only
 those of `TYPE` if given, `show` prints the text of one note verbatim, `add`
 reads the text from stdin and prints the new timestamp (now unless
 `--timestamp` is given), `delete` removes a note.
+
+Timestamps are UTC in whole seconds as digits, `YYYYmmddHHMMSS`, e.g.
+`20261009114703`.
 """
 
 STORE = Path('data/notes.data')
@@ -91,7 +94,8 @@ def locked(store: Path) -> Generator[None]:
         yield
 
 
-TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
+TIMESTAMP_HELP = 'e.g. 20261009114703'
 
 
 def now() -> str:
@@ -104,6 +108,21 @@ def is_timestamp(timestamp: str) -> bool:
     except ValueError:
         return False
     return parsed.strftime(TIMESTAMP_FORMAT) == timestamp
+
+
+def checked_timestamp(timestamp: str) -> str:
+    if not is_timestamp(timestamp):
+        raise fail(f'TIMESTAMP must look like {TIMESTAMP_HELP}')
+    return timestamp
+
+
+def note_text(store: Path, timestamp: str) -> str | None:
+    row = (
+        load(store, secret_box())
+        .execute('SELECT text FROM notes WHERE timestamp = ?', (timestamp,))
+        .fetchone()
+    )
+    return None if row is None else row[0]
 
 
 def is_type(kind: str) -> bool:
@@ -145,14 +164,10 @@ def list_notes(
 
 @app.command(help='The text of the note, verbatim')
 def show(ctx: typer.Context, timestamp: str) -> None:
-    row = (
-        load(ctx.obj, secret_box())
-        .execute('SELECT text FROM notes WHERE timestamp = ?', (timestamp,))
-        .fetchone()
-    )
-    if row is None:
+    text = note_text(ctx.obj, checked_timestamp(timestamp))
+    if text is None:
         raise fail(f'no note at {timestamp}')
-    sys.stdout.write(row[0])
+    sys.stdout.write(text)
 
 
 @app.command(help='Add a note with the text from stdin, print its timestamp')
@@ -170,13 +185,12 @@ def add(
         typer.Option(
             default_factory=now,
             show_default='now',
-            help='UTC, e.g. 2026-10-09T11:47:03.123456Z',
+            help=f'UTC, {TIMESTAMP_HELP}',
         ),
     ],
 ) -> None:
     text = sys.stdin.read()
-    if not is_timestamp(timestamp):
-        raise fail('TIMESTAMP must look like 2026-10-09T11:47:03.123456Z')
+    timestamp = checked_timestamp(timestamp)
     if not is_type(kind):
         raise fail('TYPE must be a single lowercase word')
     if not summary.strip() or '\n' in summary:
@@ -199,6 +213,7 @@ def add(
 
 @app.command(help='Delete the note at the timestamp')
 def delete(ctx: typer.Context, timestamp: str) -> None:
+    timestamp = checked_timestamp(timestamp)
     box = secret_box()
     with locked(ctx.obj):
         con = load(ctx.obj, box)

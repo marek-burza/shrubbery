@@ -1,4 +1,5 @@
 import base64
+import itertools
 import os
 from pathlib import Path
 
@@ -25,8 +26,12 @@ def run(*args: str, stdin: str | None = None):
     return CliRunner().invoke(notes.app, list(args), input=stdin)
 
 
+SECONDS = itertools.count(10)
+
+
 def add(kind: str, summary: str, body: str = BODY) -> str:
-    result = run('add', kind, summary, stdin=body)
+    timestamp = f'202603040506{next(SECONDS)}'
+    result = run('add', '--timestamp', timestamp, kind, summary, stdin=body)
     assert result.exit_code == 0, result.output
     return result.stdout.strip()
 
@@ -108,27 +113,49 @@ def test_invalid_note_is_rejected(
     assert not store.exists()
 
 
-def test_timestamp_option(store: Path) -> None:
-    timestamp = '2026-01-02T03:04:05.000006Z'
-    result = run('add', '--timestamp', timestamp, 'numerai', 'Old', stdin=BODY)
+def test_default_timestamp_is_now(store: Path) -> None:
+    result = run('add', 'numerai', 'Now', stdin=BODY)
     assert result.exit_code == 0, result.output
-    assert result.stdout == f'{timestamp}\n'
-    later = add('numerai', 'New')
+    timestamp = result.stdout.strip()
+
+    assert notes.is_timestamp(timestamp)
+    assert run('list').stdout == f'{timestamp} numerai Now\n'
+
+
+def test_timestamp_option(store: Path) -> None:
+    result = run(
+        'add', '--timestamp', '20260102030405', 'model', 'Old', stdin=BODY
+    )
+    assert result.exit_code == 0, result.output
+    assert result.stdout == '20260102030405\n'
+    later = add('model', 'New')
 
     assert run('list').stdout.splitlines() == [
-        f'{timestamp} numerai Old',
-        f'{later} numerai New',
+        '20260102030405 model Old',
+        f'{later} model New',
     ]
+    assert run('show', '20260102030405').stdout == BODY
     duplicate = run(
-        'add', '--timestamp', timestamp, 'numerai', 'X', stdin=BODY
+        'add', '--timestamp', '20260102030405', 'model', 'X', stdin=BODY
     )
     assert duplicate.exit_code == 1
     assert 'already exists' in duplicate.stderr
+    assert run('delete', '20260102030405').exit_code == 0
+    assert run('list').stdout == f'{later} model New\n'
 
 
 @pytest.mark.parametrize(
     'timestamp',
-    ['2026-01-02', '2026-01-02T03:04:05Z', '2026-01-02T03:04:05.1Z', 'now'],
+    [
+        '2026-01-02',
+        '2026-01-02T03:04:05Z',
+        '2026-01-02T03:04:05.000000Z',
+        '2026-01-02T03:04:05.1Z',
+        'now',
+        '202601020304',
+        '20260102030405000000',
+        '20261302030405',
+    ],
 )
 def test_invalid_timestamp_is_rejected(store: Path, timestamp: str) -> None:
     result = run('add', '--timestamp', timestamp, 'numerai', 'X', stdin=BODY)
