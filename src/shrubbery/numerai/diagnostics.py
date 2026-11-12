@@ -27,8 +27,6 @@ def max_drawdown(scores: pd.Series) -> float:
 
 
 def summarize(name: str, scores: pd.Series) -> dict[str, float]:
-    # Aggregated like the hosted diagnostics: sample std (ddof=1), Sharpe as
-    # mean / std, drawdown of the cumulative sum of the per-date scores
     mean = float(scores.mean())
     std = float(scores.std())
     return {
@@ -86,7 +84,6 @@ def per_date_scores(
         try:
             rows[date] = score_date(groups.get_group(date), date)
         except AssertionError:
-            # numerai-tools asserts enough overlapping tickers
             logger.warning(f'Skipped {date}: too few neutralizer rows')
     return pd.DataFrame.from_dict(
         rows, orient='index', columns=[COLUMN_CORRV4, COLUMN_BMC]
