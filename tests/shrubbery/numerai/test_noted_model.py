@@ -72,7 +72,7 @@ def test_submit_falls_back_to_placeholder(
     [
         (main.DiagnoseMode.NONE, []),
         (main.DiagnoseMode.HOSTED, ['hosted']),
-        (main.DiagnoseMode.LOCAL, ['local/12']),
+        (main.DiagnoseMode.LOCAL, ['local/60']),
     ],
 )
 def test_submit_dispatches_on_diagnose_mode(
@@ -102,7 +102,7 @@ def test_submit_dispatches_on_diagnose_mode(
         retrain=False,
         full=False,
         diagnose=mode,
-        diagnose_embargo=12,
+        diagnose_embargo=60,
     )
     monkeypatch.setattr(runner, 'predict_with_ids', lambda *args: None)
 

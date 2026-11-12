@@ -224,9 +224,9 @@ def main(
         typer.Option(
             min=0,
             help=(
-                'Leading validation dates left out of local diagnostics'
-                ' (e.g. 12 weekly dates = 60 business days after the end'
-                ' of training)'
+                'Business days after the last training date whose'
+                ' validation dates local diagnostics leave out (60 for'
+                ' 60-day targets)'
             ),
         ),
     ] = 0,

@@ -19,6 +19,7 @@ from shrubbery.numerai.diagnostics import (
 
 DATES = ['2019-01-04', '2019-01-11', '2019-01-18', '2019-01-25']
 SCORED_DATES = DATES[:-1]  # the last date has no published target
+LAST_TRAIN_DATE = '2018-12-28'
 TICKERS = [f'T{i:03d}' for i in range(60)]
 HOSTED_KEYS = {
     'erasAcceptedCount',
@@ -57,6 +58,9 @@ def validation(
             size=len(frame)
         ).astype('float32')
     neutralizers.to_parquet(data_directory / 'validation_neutralizer.parquet')
+    pd.DataFrame({COLUMN_ERA: ['2018-12-21', LAST_TRAIN_DATE]}).to_parquet(
+        data_directory / 'train.parquet'
+    )
     return frame
 
 
@@ -91,11 +95,19 @@ def test_copying_the_benchmark_contributes_nothing(
     assert metrics['validationBmcMean'] == pytest.approx(0, abs=1e-6)
 
 
-def test_embargo_drops_leading_dates(validation: pd.DataFrame) -> None:
+@pytest.mark.parametrize(
+    ('business_days', 'dropped'),
+    [(4, 0), (5, 1), (9, 1), (10, 2)],
+)
+def test_embargo_counts_business_days_after_training(
+    validation: pd.DataFrame, business_days: int, dropped: int
+) -> None:
+    # 5 business days after Friday 2018-12-28 is Friday 2019-01-04
     metrics = compute_local_diagnostics(
-        predictions(validation, COLUMN_TARGET), embargo_dates=1
+        predictions(validation, COLUMN_TARGET),
+        embargo_business_days=business_days,
     )
-    assert metrics['erasAcceptedCount'] == len(SCORED_DATES) - 1
+    assert metrics['erasAcceptedCount'] == len(SCORED_DATES) - dropped
 
 
 def test_skips_dates_without_neutralizers(validation: pd.DataFrame) -> None:

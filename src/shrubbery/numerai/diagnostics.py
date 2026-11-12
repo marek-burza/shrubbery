@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from numerai_tools.scoring import neutral_contribution, neutral_correlation
@@ -58,8 +59,21 @@ def score_date(date_data: pd.DataFrame, date: str) -> tuple[float, float]:
     return float(ncorr.iloc[0]), float(nbmc.iloc[0])
 
 
+def embargo_end(business_days: int) -> str:
+    # Last date whose target overlaps the target of the last training date
+    last_train_date = read_numerai_parquet('train.parquet', [COLUMN_ERA])[
+        COLUMN_ERA
+    ].max()
+    end = str(np.busday_offset(last_train_date, business_days, roll='forward'))
+    logger.info(
+        f'Diagnostics embargo: {business_days} business days after {last_train_date},'
+        f' scoring dates after {end}'
+    )
+    return end
+
+
 def per_date_scores(
-    prediction_data: pd.DataFrame, embargo_dates: int = 0
+    prediction_data: pd.DataFrame, embargo_business_days: int = 0
 ) -> pd.DataFrame:
     keys = [COLUMN_ID, COLUMN_ERA]
     data = (
@@ -77,7 +91,8 @@ def per_date_scores(
         )
         .dropna(subset=[COLUMN_TARGET])
     )
-    dates = sorted(data[COLUMN_ERA].unique())[embargo_dates:]
+    end = embargo_end(embargo_business_days)
+    dates = sorted(date for date in data[COLUMN_ERA].unique() if date > end)
     groups = data.groupby(COLUMN_ERA)
     rows = {}
     for date in dates:
@@ -91,18 +106,20 @@ def per_date_scores(
 
 
 def compute_local_diagnostics(
-    prediction_data: pd.DataFrame, embargo_dates: int = 0
+    prediction_data: pd.DataFrame, embargo_business_days: int = 0
 ) -> dict[str, float]:
     """Local replacement of `submit_diagnostic_predictions`.
 
     Returns the subset of the hosted diagnostics with documented
     definitions, under the hosted keys. Only dates with published
     targets are scored, so the values approximate, not reproduce,
-    the hosted ones. `embargo_dates` drops that many leading dates
-    (the hosted diagnostics apply no embargo).
+    the hosted ones. Only dates more than `embargo_business_days` after
+    the last date of `train.parquet` are scored, so that their targets do
+    not overlap the training targets (the hosted diagnostics apply no
+    embargo; 60 matches 60-day targets).
     """
     logger.info('Diagnostics mode: local')
-    scores = per_date_scores(prediction_data, embargo_dates)
+    scores = per_date_scores(prediction_data, embargo_business_days)
     metrics = {
         'erasAcceptedCount': float(len(scores)),
         **summarize('validationCorrV4', scores[COLUMN_CORRV4]),
