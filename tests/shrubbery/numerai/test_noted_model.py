@@ -54,13 +54,69 @@ def test_submit_falls_back_to_placeholder(
         lambda predictions, model_id: submitted.append(model_id),
     )
     runner = main.NumeraiRunner(
-        timestamp, 'small', retrain=False, full=False, diagnose=False
+        timestamp,
+        'small',
+        retrain=False,
+        full=False,
+        diagnose=main.DiagnoseMode.NONE,
     )
     monkeypatch.setattr(runner, 'predict_with_ids', lambda *args: None)
 
     runner.submit(NumeraiModel(None, [], []), [])
 
     assert submitted == [numerai_model_id]
+
+
+@pytest.mark.parametrize(
+    ('mode', 'expected'),
+    [
+        (main.DiagnoseMode.NONE, []),
+        (main.DiagnoseMode.HOSTED, ['hosted']),
+        (main.DiagnoseMode.LOCAL, ['local/12']),
+    ],
+)
+def test_submit_dispatches_on_diagnose_mode(
+    store: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: main.DiagnoseMode,
+    expected: list[str],
+) -> None:
+    monkeypatch.setattr(
+        main, 'numerai_models', lambda: ['example20261008111501']
+    )
+    monkeypatch.setattr(main, 'submit_tournament_predictions', lambda *a: None)
+    diagnosed = []
+    monkeypatch.setattr(
+        main,
+        'submit_diagnostic_predictions',
+        lambda *args: diagnosed.append('hosted'),
+    )
+    monkeypatch.setattr(
+        main,
+        'compute_local_diagnostics',
+        lambda predictions, embargo: diagnosed.append(f'local/{embargo}'),
+    )
+    runner = main.NumeraiRunner(
+        '20261008111501',
+        'small',
+        retrain=False,
+        full=False,
+        diagnose=mode,
+        diagnose_embargo=12,
+    )
+    monkeypatch.setattr(runner, 'predict_with_ids', lambda *args: None)
+
+    runner.submit(NumeraiModel(None, [], []), [])
+
+    assert diagnosed == expected
+
+
+def test_diagnose_option_takes_a_mode() -> None:
+    result = CliRunner().invoke(
+        main.app, ['--model', '20261008111501', '--diagnose', 'yes']
+    )
+    assert result.exit_code != 0
+    assert 'none' in result.output and 'local' in result.output
 
 
 def test_cache_noted_script(store: Path) -> None:

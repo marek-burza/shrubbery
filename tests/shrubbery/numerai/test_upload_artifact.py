@@ -19,7 +19,7 @@ from shrubbery.numerai.constants import (
     COLUMN_INDEX_ERA,
     COLUMN_PREDICTION,
 )
-from shrubbery.numerai.main import NumeraiRunner
+from shrubbery.numerai.main import DiagnoseMode, NumeraiRunner
 from shrubbery.numerai.model import NumeraiModel
 from shrubbery.numerai.napi import save_prediction
 from shrubbery.numerai.utilities import load_model, store_model
@@ -244,7 +244,7 @@ def test_runner_derives_its_paths(
         'small',
         retrain=False,
         full=False,
-        diagnose=False,
+        diagnose=DiagnoseMode.NONE,
     )
     assert runner.model_script_file == Path('20261008111501.py')
     assert runner.model_pickle_file == Path(

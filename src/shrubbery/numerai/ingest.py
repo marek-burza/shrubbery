@@ -43,6 +43,7 @@ def download_numerai_files() -> None:
         'train_benchmark_models.parquet',
         'validation.parquet',
         'validation_benchmark_models.parquet',
+        'validation_neutralizer.parquet',
         'live.parquet',
         'live_benchmark_models.parquet',
         'features.json',

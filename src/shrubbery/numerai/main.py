@@ -1,3 +1,4 @@
+import enum
 import gc
 import logging
 import os
@@ -16,6 +17,7 @@ from shrubbery.numerai.constants import (
     COLUMN_ID,
     SUBDIRECTORY_MODELS,
 )
+from shrubbery.numerai.diagnostics import compute_local_diagnostics
 from shrubbery.numerai.ingest import (
     download_numerai_files,
     get_feature_set,
@@ -44,6 +46,12 @@ logger = logging.getLogger('shrubbery')
 MODEL_NOTES = Path('data/numerai.data')
 
 
+class DiagnoseMode(str, enum.Enum):
+    NONE = 'none'
+    HOSTED = 'hosted'
+    LOCAL = 'local'
+
+
 class NumeraiRunner:
     def __init__(
         self,
@@ -51,13 +59,15 @@ class NumeraiRunner:
         feature_set_name: str,
         retrain: bool,
         full: bool,
-        diagnose: bool,
+        diagnose: DiagnoseMode,
+        diagnose_embargo: int = 0,
     ) -> None:
         self.timestamp = timestamp
         self.feature_set_name = feature_set_name
         self.retrain = retrain
         self.full = full
         self.diagnose = diagnose
+        self.diagnose_embargo = diagnose_embargo
 
     @property
     def model_script_file(self) -> Path:
@@ -128,14 +138,21 @@ class NumeraiRunner:
             self.predict_with_ids(model, feature_names, 'live'),
             numerai_model_id,
         )
-        if not self.diagnose:
+        if self.diagnose == DiagnoseMode.NONE:
             return
         gc.collect()
         try:
-            submit_diagnostic_predictions(
-                self.predict_with_ids(model, feature_names, 'validation'),
-                numerai_model_id,
+            predictions_with_ids = self.predict_with_ids(
+                model, feature_names, 'validation'
             )
+            if self.diagnose == DiagnoseMode.LOCAL:
+                compute_local_diagnostics(
+                    predictions_with_ids, self.diagnose_embargo
+                )
+            else:
+                submit_diagnostic_predictions(
+                    predictions_with_ids, numerai_model_id
+                )
         except MemoryError:
             traceback.print_exc()
 
@@ -191,15 +208,28 @@ def main(
         bool, typer.Option('--retrain', help='Use this flag to retrain')
     ] = False,
     diagnose: Annotated[
-        bool,
+        DiagnoseMode,
         typer.Option(
-            '--diagnose/--no-diagnose',
-            help='Submit validation diagnostic predictions',
+            help=(
+                'Validation diagnostics: none, hosted (uploaded to Numerai)'
+                ' or local (computed from the published data)'
+            ),
         ),
-    ] = True,
+    ] = DiagnoseMode.HOSTED,
     feature_set_name: Annotated[
         str, typer.Option(help='Name of the Numerai feature set')
     ] = 'small',
+    diagnose_embargo: Annotated[
+        int,
+        typer.Option(
+            min=0,
+            help=(
+                'Leading validation dates left out of local diagnostics'
+                ' (e.g. 12 weekly dates = 60 business days after the end'
+                ' of training)'
+            ),
+        ),
+    ] = 0,
     full: Annotated[
         bool,
         typer.Option('--full', help='Train on training and validation data'),
@@ -214,6 +244,7 @@ def main(
         feature_set_name=feature_set_name,
         retrain=retrain,
         diagnose=diagnose,
+        diagnose_embargo=diagnose_embargo,
         full=full,
     ).run()
 
