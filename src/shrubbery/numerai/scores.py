@@ -28,7 +28,8 @@ per model, round and metric is returned. `day` tells how many days of
 scoring a value covers; a 20-day score is final at day 20, a 60-day score
 at day 60. `resolved` only turns true once the whole round has resolved
 (about 3 months after the round, for all metrics), so for recent final
-20-day scores filter with `--min-day 20` instead of `--resolved-only`.
+scores filter with `--min-day 20` (20-day) or `--min-day 60` (60-day,
+incl. all scores from round 1393) instead of `--resolved-only`.
 
 **Models**: pass model names as arguments. Names of models owned by the
 account in `NUMERAI_PUBLIC_ID`/`NUMERAI_SECRET_KEY` are resolved first,
@@ -49,11 +50,18 @@ With `--summary`, one record per model x metric over the filtered rounds:
 
 **Metrics** (`--metric`, repeatable; default: all available):
 
+- `neutral_corr` (NCORR) and `neutral_mmc` (NMMC) - 60-day correlation
+with the target and contribution to the meta model, after neutralizing
+against Numerai's neutralizer matrix; paid from round 1393
+- `neutral_bmc` (NBMC) - 60-day contribution against the benchmark model
+after the same neutralization; best single gauge of unique signal from
+round 1393, not paid (announced to replace NCORR in 2027)
 - `v2_corr20` (CORR20v2) and `mmc` - 20-day correlation and meta model
-contribution against the main target of the time; paid until round 1342
-- `corr60`, `mmc60` - 60-day versions; paid from round 1343
+contribution against the main target of the time; paid until round 1342,
+not scored from round 1393
+- `corr60`, `mmc60` - 60-day versions; paid for rounds 1343-1392
 - `bmc` - contribution after neutralizing to the benchmark models; best
-single gauge of unique signal, not paid
+single gauge of unique signal until round 1392, not paid
 - `fnc_v3` (feature neutral corr), `cort20` (teager target), `corj60`
 (jerome target), `season_score`, `corr_w_meta_model` (uniqueness),
 `apcwnm`/`mcwnm` (average/max correlation with other submissions)
@@ -62,8 +70,9 @@ single gauge of unique signal, not paid
 **Payout history** (main target and formula): Cyrus-20 with
 0.5 CORR + 2 MMC from 2024-01-02; Ender-20 with 0.75 CORR + 2.25 MMC from
 2026-01-01; Ender-60 with 3 CORR60 + 15 MMC60 from round 1343
-(2026-08-28). Values before and after a target change are measured against
-different targets.
+(2026-08-28); Jupiter-60 (data v6) with 8 NCORR60 + 32 NMMC60 from round
+1393 (2026-11-06). Values before and after a target change are measured
+against different targets.
 
 **Interpretation caveats**: rounds are daily but their scoring windows
 overlap (20 or 60 days), so consecutive rounds are strongly correlated;
@@ -74,10 +83,10 @@ values, BMC and a reference model for attribution.
 
 **Examples**:
 
-- `numerai-scores example1 example2 integration_test -m v2_corr20 -m bmc -n 30`
-- `numerai-scores --summary --min-day 20 --since 2026-06-01 -m v2_corr20`
+- `numerai-scores example1 example2 integration_test -m neutral_corr -m neutral_bmc -n 30`
+- `numerai-scores --summary --min-day 60 --since 2026-11-06 -m neutral_corr`
 - `numerai-scores example1 -m mmc --daily -n 5` (daily snapshot paths)
-- `numerai-scores -m corr60 -m mmc60 --format csv --output scores.csv`
+- `numerai-scores -m neutral_corr -m neutral_mmc --format csv --output scores.csv`
 """
 
 COLUMNS = {
