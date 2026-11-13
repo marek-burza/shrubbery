@@ -7,6 +7,7 @@ This is a living document I keep my loose notes on Agentic Systems.
 - Agents run sandboxed, with least privilege, least dependencies installed (and certainly no arbitrary ones), and least network access possible.
 - Threat-model against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) (goal hijack incl. prompt injection, tool misuse, identity and privilege abuse, supply chain, unexpected code execution, memory and context poisoning, insecure inter-agent communication, cascading failures, human-agent trust exploitation, rogue agents).
 - Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
+- Reuse before building: an off-the-shelf task-specific model (e.g. from Hugging Face) before fine-tuning a generic one, and fine-tuning before training a proprietary one.
 
 ## Guardrails
 
@@ -86,6 +87,7 @@ Based on Anthropic's [Writing Effective Tools for Agents](https://www.anthropic.
 
 ## Evaluation
 
+- Public benchmarks and eval harnesses first where they fit the task; own eval sets fill the gaps. Public sets may have leaked into training data, so they don't replace a private held-out set.
 - Eval set before the feature (like TDD): replay real incidents with known outcomes, keep a held-out split.
 - Four levels: retrieval (recall@k), generation (groundedness, citations), trajectory (tool choice, arguments, steps, cost) and business outcome. Measure the decision, not the text.
 - Hallucination checks: every ID, number and code must exist in the domain model or the source; split answers into claims and verify each against evidence. Track abstention rate alongside accuracy so confident guessing isn't rewarded.
