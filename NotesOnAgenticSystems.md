@@ -5,6 +5,7 @@ This is a living document I keep my loose notes on Agentic Systems.
 ## General Rules
 
 - Agents run sandboxed, with least privilege, least dependencies installed (and certainly no arbitrary ones), and least network access possible.
+- Threat-model against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) (goal hijack incl. prompt injection, tool misuse, identity and privilege abuse, supply chain, unexpected code execution, memory and context poisoning, insecure inter-agent communication, cascading failures, human-agent trust exploitation, rogue agents).
 - Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
 
 ## Guardrails
