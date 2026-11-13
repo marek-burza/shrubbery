@@ -32,7 +32,7 @@ AI:
 
 ## Patterns
 
-Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) (Schluntz & Zhang). Start from a single LLM call augmented with retrieval, tools and memory; add a pattern only when it measurably beats that, and an agent only when its role has its own tools, context or permissions. Workflows (fixed code paths) come before agents (the LLM directs its own steps).
+Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) (Schluntz & Zhang). Start from a single LLM call augmented with retrieval, tools and memory; add a pattern only when it measurably beats that, and an agent only when its role has its own tools, context or permissions. Workflows (fixed code paths) come before agents (the LLM directs its own steps). An agent is an LLM that runs tools in a loop to achieve a goal, the goal being the stopping condition ([Willison](https://simonwillison.net/2025/Sep/18/agents/); Anthropic uses the same definition).
 
 - Prompt chaining: fixed sequence of LLM calls with programmatic gates between steps. Use when the task splits cleanly into known steps (e.g. draft a protocol, validate it, then translate it into instrument commands).
 - Routing: classify the input, dispatch to a specialized prompt, tool or model. Use when inputs fall into distinct categories handled better separately (e.g. easy requests to a small model, hard ones to a large one).
