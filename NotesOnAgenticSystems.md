@@ -41,6 +41,35 @@ Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engin
 - Autonomous agent: an LLM in a loop with tools, grounded in environment feedback, with stopping conditions (max iterations, budget). Use for open-ended problems with an unpredictable number of steps, only in sandboxed environments with checkpoints for human review.
 - Blackboard (not in Anthropic's list; classic AI pattern, see [kadhar.dev](https://kadhar.dev/blog/multi-agent-systems-from-scratch)): no central coordinator, agents read and write a shared workspace and act when they can contribute. Use when the next step depends on discoveries (e.g. debugging, incident investigation). Hard to test and prone to loops, so it needs hop limits and a budget.
 
+## Context Engineering
+
+Assembling, at every model call, the smallest set of high-signal tokens (system prompt, tools, examples, history, retrieved data) that makes the desired behavior most likely. Output is a product of context and weights, and improving the context is cheaper and faster than a bigger model or more thinking. Based on Drew Breunig's [The State of Context Engineering](https://www.dbreunig.com/2026/10/24/the-state-of-context-engineering.html) and [How Contexts Fail and How to Fix Them](https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html), Anthropic's [Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), Manus' [Lessons from Building Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) and Chroma's [Context Rot](https://research.trychroma.com/context-rot).
+
+Pitfalls:
+- Context rot: recall and reasoning degrade gradually as the window fills, in every model. Context is an attention budget, and a long window fits more information but also more errors.
+- Context poisoning: a hallucination or wrong fact enters the context and keeps being referenced.
+- Context distraction: a long context makes the model focus on it rather than its base knowledge and repeat past actions instead of planning anew.
+- Context confusion: superfluous content (too many tools or skills, unrelated memories) steers answers unpredictably.
+- Context clash: parts of the context contradict each other; examples in the history can override explicit instructions.
+- Context inertia: the model keeps pursuing a hypothesis or subtask after it should have stopped.
+- Fighting the weights: instructions that run against model's training. Shape tools and formats to what the model already knows.
+- Self-imposed few-shot rut: a repetitive action-observation history makes the model imitate itself. Add controlled variation in serialization and phrasing.
+- Memory accumulation: long-lived agents pile up conflicting memories and skills; strategic forgetting is unsolved.
+
+Best practices and tactics:
+- System prompt at the right altitude: between brittle if-else rules and vague guidance, in sections (XML tags or Markdown headers). Start minimal on the best model and add instructions only for observed failures. A few diverse, canonical examples beat a list of edge-case rules.
+- Tools: few, non-overlapping, clearly scoped, with token-efficient outputs. If a human can't tell which tool to use, neither can the agent.
+- Tool loadout: expose only the tools and skills a request needs (selected by a small model or a state machine). Mask tools rather than removing them mid-task, which keeps the cache and the history consistent.
+- Just-in-time retrieval: keep lightweight references (paths, queries, URLs) and load data with tools when needed (progressive disclosure), combined with a small up-front context (e.g. `CLAUDE.md`).
+- Offloading: keep state outside the window (files, database, todo list), with restorable compression: drop the content, keep its path or URL.
+- Recitation: rewrite the plan or todo list at the end of the context to keep the goal in recent attention.
+- Pruning and compaction: drop turns no longer needed, clear old tool results, summarize near the limit. Tune the summary for recall first, then precision; a small model can filter what is relevant before summarizing.
+- Quarantine: subagents explore in clean windows and return condensed summaries (1-2k tokens) to the lead agent.
+- Reset: start fresh (Breunig at around 200k-300k tokens), or reset periodically with a short handoff note while the environment persists.
+- Keep errors in: failed actions and stack traces in the context keep the model from repeating them.
+- KV-cache: stable prefix (no timestamps at the top), append-only context, deterministic serialization. Cached input tokens can be ~10x cheaper.
+- Deterministic first: assemble the context in code wherever possible and leave to the model only what can't be specified.
+
 ## Autonomy Spectrum
 
 How AI earns more autonomy:
