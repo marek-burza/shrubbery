@@ -1,5 +1,22 @@
 # Coding Agents Notes
 
+## Current Approach
+
+The general rule: I use agents in proportion to the strength of the feedback loop around them - the more a deterministic check can tell the agent it is wrong, the more I delegate.
+
+This is how I structure AI coding agents and guardrails in my daily engineering process to maximize throughput while maintaining test coverage and software reliability:
+- All code, whether written by a human or an agent, is subject to automated checks: tests (unit, integration, e2e, etc.) and coverage gates, type checking, linting, dependency checks (dependency update strategy, removal of unused dependencies, license checks), complexity caps and vulnerability scans. Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
+- All core functionality code is subject to human code review.
+- The agent gets its context at the start of the project: a CLAUDE.md or AGENTS.md with an architecture draft, pointers to the company's or team's conventions, and skills shared by the team (ideally loaded depending on the type of task, to keep the context focused). Where applicable, an ontology grounds the agent's work in the relevant domain knowledge.
+- Simple modifications that a human can verify at a glance do not require an upfront plan. As soon as a change involves more complexity (it spans multiple files, requires multiple steps, crosses a team boundary or touches an interface contract), the agent must write a plan and keep iterating on it in a dialog with a human until all ambiguity is removed and all decisions are made, before I sign off on its execution.
+- Executing a plan starts with writing tests (or evals where an AI/ML model is involved) before the actual functionality, just like in TDD.
+- Individual implementation steps are kept small enough for a human to review with full understanding.
+- The granularity of the plan's steps is proportionate to the size of the task and its proximity to the critical path of the code I work with (e.g. scaffolding code or build configuration calls for less scrutiny than core functionality).
+- Work which does not require a strict end-to-end plan (e.g. troubleshooting, AI-assisted code reviews, onboarding onto new code) belongs in loops (e.g. hypothesize-implement-verify-repair, search-distill-quiz) relying on agent skills, ideally with a hook which, at the end of a session, proposes improvements to the skills themselves and to the documentation.
+- Independent work (like troubleshooting) and long-running tasks (like the implementation of a plan) run in the background or in parallel worktrees, and side investigations go to subagents or separate sessions so they do not pollute the context of the main task.
+- Where possible, I keep an eye on the team's velocity and escaped-defect metrics in relation to changes to the harness (skills, tools, checks) to learn what works and what doesn't.
+- Agents run sandboxed, with least privilege.
+
 ## Claude Code
 
 - `Shift + TAB, Shift TAB` - cycle through modes to enter planning mode
