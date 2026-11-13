@@ -29,6 +29,18 @@ AI:
 - Recovering from errors that a fixed rule doesn't cover: reasoning over physical system or hardware state, history, available resources, and past incidents and their remedies to suggest the next step.
 - Interpreting messy signals: images, anomalies, free-text notes, etc.
 
+## Patterns
+
+Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) (Schluntz & Zhang). Start from a single LLM call augmented with retrieval, tools and memory; add a pattern only when it measurably beats that. Workflows (fixed code paths) come before agents (the LLM directs its own steps).
+
+- Prompt chaining: fixed sequence of LLM calls with programmatic gates between steps. Use when the task splits cleanly into known steps (e.g. draft a protocol, validate it, then translate it into instrument commands).
+- Routing: classify the input, dispatch to a specialized prompt, tool or model. Use when inputs fall into distinct categories handled better separately (e.g. easy requests to a small model, hard ones to a large one).
+- Parallelization: sectioning (independent subtasks run concurrently) or voting (same task run several times, results aggregated). Use for speed, or for confidence through consensus (e.g. guardrail checks, review of risky changes).
+- Orchestrator-workers: a lead LLM decomposes the task at runtime, delegates to workers and synthesizes. Use when subtasks can't be predicted in advance (e.g. multi-file code changes, research across many sources).
+- Evaluator-optimizer: a generator and a critic in a loop. Use when evaluation criteria are clear and iteration measurably improves the result (e.g. translation, iterative search, plan refinement against a solver's feedback).
+- Autonomous agent: an LLM in a loop with tools, grounded in environment feedback, with stopping conditions (max iterations, budget). Use for open-ended problems with an unpredictable number of steps, only in sandboxed environments with checkpoints for human review.
+- Blackboard (not in Anthropic's list; classic AI pattern, see [kadhar.dev](https://kadhar.dev/blog/multi-agent-systems-from-scratch)): no central coordinator, agents read and write a shared workspace and act when they can contribute. Use when the next step depends on discoveries (e.g. debugging, incident investigation). Hard to test and prone to loops, so it needs hop limits and a budget.
+
 ## Autonomy Spectrum
 
 How AI earns more autonomy:
