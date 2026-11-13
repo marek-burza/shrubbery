@@ -89,10 +89,19 @@ Based on Anthropic's [Writing Effective Tools for Agents](https://www.anthropic.
 - Eval set before the feature (like TDD): replay real incidents with known outcomes, keep a held-out split.
 - Four levels: retrieval (recall@k), generation (groundedness, citations), trajectory (tool choice, arguments, steps, cost) and business outcome. Measure the decision, not the text.
 - Hallucination checks: every ID, number and code must exist in the domain model or the source; split answers into claims and verify each against evidence. Track abstention rate alongside accuracy so confident guessing isn't rewarded.
-- CI gate on every change to prompts, models, tools, ontology or index; pin model versions, canary rollouts.
+- CI gate on every change to prompts, models, tools, ontology or index; pin model versions.
 - LLM-as-judge only after calibration against experts (100-200 samples).
 - Failure analysis with [MAST](https://arxiv.org/abs/2503.13657): specification, inter-agent misalignment, verification.
 - Evaluation: prototype in a local server, then run realistic multi-call tasks with verifiable outcomes and held-out sets. Track tool calls, tokens and errors, read the transcripts, and let an agent refactor the tools from them.
+
+## Releasing
+
+- A release is any change to prompts, model version, tools, ontology or index, shipped as one versioned bundle behind a feature flag. A provider's model update is a release too, so pin snapshots rather than aliases.
+- Offline replay first: rerun recorded traces and the eval set against the new bundle and diff the decisions.
+- Staged rollout: shadow (runs alongside, no effect), then canary (small share, or one line or site), then wider, with a metrics gate at each stage. Read-only workflows go first, state-changing ones last.
+- A/B tests on outcomes (task success, override and acceptance rate, cost, latency), not text. Outputs are non-deterministic, so samples must be larger; randomize per session or workflow, not per request, since agent runs are stateful.
+- Rollback covers the bundle, in-flight runs and anything the bad version wrote (memories, knowledge, records), which is quarantined or reverted.
+- Release and autonomy level are separate decisions: a new version starts at the autonomy level its predecessor earned, or lower, never higher.
 
 ## Autonomy Spectrum
 
