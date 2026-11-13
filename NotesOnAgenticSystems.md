@@ -85,7 +85,7 @@ Based on Anthropic's [Writing Effective Tools for Agents](https://www.anthropic.
 
 ## Evaluation
 
-- Eval set before the feature: replay real incidents with known outcomes, keep a held-out split.
+- Eval set before the feature (like TDD): replay real incidents with known outcomes, keep a held-out split.
 - Four levels: retrieval (recall@k), generation (groundedness, citations), trajectory (tool choice, arguments, steps, cost) and business outcome. Measure the decision, not the text.
 - Hallucination checks: every ID, number and code must exist in the domain model or the source; split answers into claims and verify each against evidence. Track abstention rate alongside accuracy so confident guessing isn't rewarded.
 - CI gate on every change to prompts, models, tools, ontology or index; pin model versions, canary rollouts.
