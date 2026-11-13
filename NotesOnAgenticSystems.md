@@ -2,7 +2,7 @@
 
 This is a living document I keep my loose notes on Agentic Systems.
 
-## General Reles
+## General Rules
 
 - Agents run sandboxed, with least privilege, least dependencies installed (and certainly no arbitrary ones), and least network access possible.
 - Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
@@ -10,7 +10,8 @@ This is a living document I keep my loose notes on Agentic Systems.
 ## Guardrails
 
 - Where an LLM is part of the product itself (labeling, data extraction, etc.), I also find alternative means and require consensus between them to counterbalance the LLM.
-- Budget caps, and a decision on how to gracefully degrade when the cap is reached.
+- Budget caps & rate limits, blast-radius limits, and a decision on how to gracefully degrade when a cap/limit is reached.
+- Lethal trifecta: an agent with private data, untrusted content and an outbound channel in one session can be tricked into leaking data, so remove one leg. Untrusted text is read by a quarantined model that returns only typed fields to the agent that can act (dual-LLM / [CaMeL](https://arxiv.org/abs/2503.18813)-style privilege separation).
 
 ## Use Cases for AI vs. Deterministic Software
 
@@ -21,17 +22,17 @@ Deterministic software:
 - Identity (of physical items, human operators and technological artifacts) & security (authentication & authorization, sandboxing, etc.).
 - Executing a chain of actions (with clear and validated interface contracts).
 - Hard constraints and safety: operating limits (ranges of physical values), physical safety (e.g. collision avoidance) and domain logic (e.g. checking that a schedule is feasible, ordering does not breach invariants). These live in code and policy engines, never only in a prompt.
-- The audit trail. Every technological artifact is versioned and traceable.
+- The audit trail. Every technological artifact is versioned and traceable, including the ontology (domain model), which is versioned, reviewed and tested like code. Every fact an agent uses links back to its source record (provenance).
 
 AI:
-- Turning a operator's intent into a draft protocol or a plan, which is then validated against the constraints above.
-- Dynamic scheduling and replanning when an hardware goes down or short on items it operates on. An optimizer agent proposes, and a solver and the digital twin check the proposal before anything runs.
+- Turning an operator's intent into a draft protocol or a plan, which is then validated against the constraints above.
+- Dynamic scheduling and replanning when hardware goes down or runs short of the items it operates on. An optimizer agent proposes, and a solver and the digital twin check the proposal before anything runs.
 - Recovering from errors that a fixed rule doesn't cover: reasoning over physical system or hardware state, history, available resources, and past incidents and their remedies to suggest the next step.
 - Interpreting messy signals: images, anomalies, free-text notes, etc.
 
 ## Patterns
 
-Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) (Schluntz & Zhang). Start from a single LLM call augmented with retrieval, tools and memory; add a pattern only when it measurably beats that. Workflows (fixed code paths) come before agents (the LLM directs its own steps).
+Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) (Schluntz & Zhang). Start from a single LLM call augmented with retrieval, tools and memory; add a pattern only when it measurably beats that, and an agent only when its role has its own tools, context or permissions. Workflows (fixed code paths) come before agents (the LLM directs its own steps).
 
 - Prompt chaining: fixed sequence of LLM calls with programmatic gates between steps. Use when the task splits cleanly into known steps (e.g. draft a protocol, validate it, then translate it into instrument commands).
 - Routing: classify the input, dispatch to a specialized prompt, tool or model. Use when inputs fall into distinct categories handled better separately (e.g. easy requests to a small model, hard ones to a large one).
@@ -69,17 +70,27 @@ Best practices and tactics:
 - Keep errors in: failed actions and stack traces in the context keep the model from repeating them.
 - KV-cache: stable prefix (no timestamps at the top), append-only context, deterministic serialization. Cached input tokens can be ~10x cheaper.
 - Deterministic first: assemble the context in code wherever possible and leave to the model only what can't be specified.
+- Typed domain model: ground agents in an ontology (objects, states, relations, allowed actions) rather than flat documents; a typed knowledge graph lifted industrial agents from 65% to 82-83% accuracy, so the data layer matters more than the model. Validate data contracts (schema, units, timezones) on ingestion, show the agent the data's age, and let tools turn raw signals into statistics and events instead of feeding the model raw arrays.
 
 ## Designing MCPs
 
 Based on Anthropic's [Writing Effective Tools for Agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Aizawa) and the MCP spec's [Security Best Practices](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices). Tools are a contract between deterministic software and a non-deterministic agent, so they are designed for the agent, not mirrored from an API.
 
-- Workflows, not endpoints: a few targeted tools for high-impact tasks instead of wrapping every API endpoint. Consolidate multi-step operations (`schedule_event` over `list_users` + `list_events` + `create_event`) and prefer search over list.
+- Workflows, not endpoints: a few targeted tools for high-impact tasks instead of wrapping every API endpoint. Consolidate multi-step operations (`schedule_event` over `list_users` + `list_events` + `create_event`) and prefer search over list. Use all MCP primitives: schema and reference data as resources, standard procedures as prompts.
 - Namespacing: prefix by service and resource (`asana_projects_search`) so overlapping tools stay distinguishable across servers.
 - Descriptions as onboarding: explain niche terms, query formats and relations between resources as to a new hire. Unambiguous parameter names (`user_id`, not `user`) and strict, typed schemas.
 - Meaningful, token-efficient output: natural-language names over opaque IDs, a `response_format` (concise or detailed), pagination, filtering and truncation with sensible defaults. Errors and truncation notices tell the agent what to do next, not just a code or traceback.
-- Read vs. write: mark tools with annotations (read-only, destructive, open-world) and keep state-changing tools typed and permissioned, with a separate commit step for anything that touches the physical system.
-- Security: least-privilege scopes escalated incrementally, never pass the client's token through to downstream APIs (accept only tokens issued to the server), sessions are not authentication, and local servers run sandboxed over `stdio`. Tool output is untrusted input to the agent.
+- Read vs. write: mark tools with annotations (read-only, destructive, open-world) and keep state-changing tools typed and permissioned. Propose returns a draft, diff and simulation result; a commit is separate (and is gated with an approval/authorization and relies on an idempotency key). Expose task-level skills (`start_changeover`) that check preconditions, never raw writes.
+- Security: least-privilege scopes escalated incrementally, never pass the client's token through to downstream APIs (accept only tokens issued to the server), sessions are not authentication, and local servers run sandboxed over `stdio`. Pin and review third-party server versions, since tool descriptions can change after approval. Tool output is untrusted input to the agent.
+
+## Evaluation
+
+- Eval set before the feature: replay real incidents with known outcomes, keep a held-out split.
+- Four levels: retrieval (recall@k), generation (groundedness, citations), trajectory (tool choice, arguments, steps, cost) and business outcome. Measure the decision, not the text.
+- Hallucination checks: every ID, number and code must exist in the domain model or the source; split answers into claims and verify each against evidence. Track abstention rate alongside accuracy so confident guessing isn't rewarded.
+- CI gate on every change to prompts, models, tools, ontology or index; pin model versions, canary rollouts.
+- LLM-as-judge only after calibration against experts (100-200 samples).
+- Failure analysis with [MAST](https://arxiv.org/abs/2503.13657): specification, inter-agent misalignment, verification.
 - Evaluation: prototype in a local server, then run realistic multi-call tasks with verifiable outcomes and held-out sets. Track tool calls, tokens and errors, read the transcripts, and let an agent refactor the tools from them.
 
 ## Autonomy Spectrum
@@ -88,8 +99,8 @@ How AI earns more autonomy:
 
 - Workflow first, agent second. Known procedures stay fixed code paths; agents handle investigation, where the path can't be scripted but progress can be checked.
 - Simulate before acting. Every plan generated by AI runs against the simulator or the digital twin first. Simulated instruments also give the agents that change system state a fast, safe feedback loop before it touches real physical system.
-- Graded autonomy: inform, recommend, act with approval, act and notify. A workflow moves up a level only after its accuracy has been measured at the level below, starting in shadow mode next to the scientists.
-- Separate read tools from write tools. Queries are free; anything that changes (physical) state (moving a robot arm, starting a chemical reaction or writing a database record) is a typed, permissioned tool where the AI proposes and a separate step commits.
+- Graded autonomy: inform, recommend, act with approval, act and notify. A workflow moves up a level only after its accuracy has been measured at the level below, starting in shadow mode next to the scientists. Sign-off stays with a named person where liability sits.
+- Separate read tools from write tools. Queries are free; anything that changes (physical) state (moving a robot arm, starting a chemical reaction or writing a database record) is a typed, permissioned tool where the AI proposes and a separate step commits. Writes are idempotent and reversible (dry-run, rollback or compensation), and long approvals run in durable workflows.
 - Abstention. When confidence is low or the data is stale, the system says so and hands over to a human.
 - The physical system must keep running without AI. A kill switch drops any workflow back to manual or fully deterministic execution.
 
@@ -97,10 +108,32 @@ How AI earns more autonomy:
 
 - Leading indicators: Share of workflow executions with use of AI/agent. Additionally, a share of these executions which were sustained (were not corrected, redone, etc.).
 - Real indicators: Domain oriented, such as cycle/turnaround time stats, etc.
-- Guardrail indicators: quality trend, incident trend, complexity trend.
+- Guardrail indicators: quality trend, incident trend, complexity trend, override and acceptance rate per recommendation type (automation complacency, alert fatigue).
 
 ## Agentic Tech
 
 ### Prompt Programming & Optimization
 
 - [DSPy](https://github.com/stanfordnlp/dspy) (Stanford NLP): declarative framework for programming LLMs in Python instead of hand-writing prompts. Pipelines are composed of modules with typed signatures (inputs and outputs), and optimizers (e.g. MIPROv2, GEPA) tune the prompts, few-shot examples or weights against a metric on a dataset.
+- Structured outputs: [Instructor](https://github.com/567-labs/instructor), [Outlines](https://github.com/dottxt-ai/outlines).
+
+### Durable Workflows
+
+- [Temporal](https://github.com/temporalio/temporal), [Restate](https://github.com/restatedev/restate): retries, idempotency and long-running human approvals.
+
+### Policy Engines
+
+- [OPA](https://github.com/open-policy-agent/opa), [Cedar](https://github.com/cedar-policy/cedar): action authorization outside the prompt.
+
+### Observability & Evals
+
+- [Langfuse](https://github.com/langfuse/langfuse), [Arize Phoenix](https://github.com/Arize-ai/phoenix): tracing of every model and tool call.
+- [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai), [promptfoo](https://github.com/promptfoo/promptfoo), [Ragas](https://github.com/vibrantlabsai/ragas): eval harnesses (Ragas for RAG).
+
+### LLM Gateways
+
+- [LiteLLM](https://github.com/BerriAI/litellm): one API over many providers, with routing, budgets and fallbacks.
+
+### Sandboxes
+
+- [gVisor](https://github.com/google/gvisor), [Firecracker](https://github.com/firecracker-microvm/firecracker), [E2B](https://github.com/e2b-dev/E2B): isolation for agent-executed code.
