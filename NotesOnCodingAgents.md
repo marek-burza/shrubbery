@@ -8,14 +8,24 @@ This is how I structure AI coding agents and guardrails in my daily engineering 
 - All code, whether written by a human or an agent, is subject to automated checks: tests (unit, integration, e2e, etc.) and coverage gates, type checking, linting, dependency checks (dependency update strategy, removal of unused dependencies, license checks), complexity caps and vulnerability scans. Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
 - All core functionality code is subject to human code review.
 - The agent gets its context at the start of the project: a CLAUDE.md or AGENTS.md with an architecture draft, pointers to the company's or team's conventions, and skills shared by the team (ideally loaded depending on the type of task, to keep the context focused). Where applicable, an ontology grounds the agent's work in the relevant domain knowledge.
-- Simple modifications that a human can verify at a glance do not require an upfront plan. As soon as a change involves more complexity (it spans multiple files, requires multiple steps, crosses a team boundary or touches an interface contract), the agent must write a plan and keep iterating on it in a dialog with a human until all ambiguity is removed and all decisions are made, before I sign off on its execution.
+- Simple modifications that a human can verify at a glance do not require an upfront plan. As soon as a change involves more complexity (it spans multiple files, requires multiple steps, crosses a team boundary or touches an interface contract), the agent must write a plan and keep iterating on it in a dialog with a human until all ambiguity is removed and all decisions are made, before I sign off on its execution. Iterating on a plan is cheaper than on implementation (especially the bigger the task).
 - Executing a plan starts with writing tests (or evals where an AI/ML model is involved) before the actual functionality, just like in TDD.
 - Individual implementation steps are kept small enough for a human to review with full understanding.
 - The granularity of the plan's steps is proportionate to the size of the task and its proximity to the critical path of the code I work with (e.g. scaffolding code or build configuration calls for less scrutiny than core functionality).
 - Work which does not require a strict end-to-end plan (e.g. troubleshooting, AI-assisted code reviews, onboarding onto new code) belongs in loops (e.g. hypothesize-implement-verify-repair, search-distill-quiz) relying on agent skills, ideally with a hook which, at the end of a session, proposes improvements to the skills themselves and to the documentation.
 - Independent work (like troubleshooting) and long-running tasks (like the implementation of a plan) run in the background or in parallel worktrees, and side investigations go to subagents or separate sessions so they do not pollute the context of the main task.
 - Where possible, I keep an eye on the team's velocity and escaped-defect metrics in relation to changes to the harness (skills, tools, checks) to learn what works and what doesn't.
-- Agents run sandboxed, with least privilege.
+- Agents run sandboxed, with least privilege, least dependencies installed (and certainly no arbitrary ones), and least network access possible.
+
+## Loose Observations
+
+- In absence of feedback loop around a coding agent the verification of its actions rests on my judgement and increases review burden.
+- Well (strongly) typed languages with semantics explicitly encoded in syntax fare better (e.g. implicit aspect of lifetimes in Rust when not explicitly declared did lead on occasion to agent's "back-and-forth" retries leading it to increasingly complex solutions). Another words - type system is not the whole contract.
+- Where error message is verbose, documentation low, and there is no impact on the critical code path (e.g. nix scaffolding code around a Rust crate) more autonomy and loops may be the quick way forward.
+- Coding agents benefit from direct input where creativity is required - e.g. troubleshooting, incomplete or indirect information.
+- When troubleshooting, and test coverage is good point the agent to the test rather than impementation in search of an issue - being able to replicate the failure trumps reasoning only about code correctness. This assumes a solid trust in the test itself.
+- It is frequently a good idea to instruct the agent to break code to verify the implementation of tests (and their effectiveness).
+- Estimates of time expected for implementation made by an agent seem to be anchored in the human capacity frame of reference (likely and artifact of what LLMs were trained on).
 
 ## Claude Code
 

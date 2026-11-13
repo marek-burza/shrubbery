@@ -4,7 +4,7 @@ This is a living document I keep my loose notes on Agentic Systems.
 
 ## General Reles
 
-- Agents run sandboxed, with least privilege.
+- Agents run sandboxed, with least privilege, least dependencies installed (and certainly no arbitrary ones), and least network access possible.
 - Anything that can be left to deterministic software, solvers or policies should be left to such specialized deterministic tools.
 
 ## Guardrails
@@ -13,7 +13,7 @@ This is a living document I keep my loose notes on Agentic Systems.
 
 ## Use Cases for AI vs. Deterministic Software
 
-AI should be used where the right answer can't be fully specified in advance but can be checked, and where it offers an edge over a classical approach or augments human or fully automated capability. AI should never act alone and unchecked; it is often best used in tandem with deterministic software. For example:
+AI should be used where the right answer can't be fully specified in advance but can be checked, and where it offers an edge over a classical approach (e.g. resulting in better metrics) or augments human or fully automated capability. AI should never act alone and unchecked; it is often best used in tandem with deterministic software. For example:
 
 Deterministic software:
 - Hardware drivers, protocol execution, state machines, etc.
@@ -38,3 +38,9 @@ How AI earns more autonomy:
 - Separate read tools from write tools. Queries are free; anything that changes (physical) state (moving a robot arm, starting a chemical reaction or writing a database record) is a typed, permissioned tool where the AI proposes and a separate step commits.
 - Abstention. When confidence is low or the data is stale, the system says so and hands over to a human.
 - The physical system must keep running without AI. A kill switch drops any workflow back to manual or fully deterministic execution.
+
+## Measuring Adoption
+
+- Leading indicators: Share of workflow executions with use of AI/agent. Additionally, a share of these executions which were sustained (were not corrected, redone, etc.).
+- Real indicators: Domain oriented, such as cycle/turnaround time stats, etc.
+- Guardrail indicators: quality trend, incident trend, complexity trend.
