@@ -22,7 +22,7 @@ Deterministic software:
 - Identity (of physical items, human operators and technological artifacts) & security (authentication & authorization, sandboxing, etc.).
 - Executing a chain of actions (with clear and validated interface contracts).
 - Hard constraints and safety: operating limits (ranges of physical values), physical safety (e.g. collision avoidance) and domain logic (e.g. checking that a schedule is feasible, ordering does not breach invariants). These live in code and policy engines, never only in a prompt.
-- The audit trail. Every technological artifact is versioned and traceable, including the ontology (domain model), which is versioned, reviewed and tested like code. Every fact an agent uses links back to its source record (provenance).
+- The audit trail. Every technological artifact is versioned and traceable: code, prompts, model versions, tool definitions, the ontology (reviewed and tested like code), retrieval indexes, eval sets and datasets. Every fact an agent uses links back to its source record (provenance).
 
 AI:
 - Turning an operator's intent into a draft protocol or a plan, which is then validated against the constraints above.
