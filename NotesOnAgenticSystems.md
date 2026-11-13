@@ -10,6 +10,7 @@ This is a living document I keep my loose notes on Agentic Systems.
 ## Guardrails
 
 - Where an LLM is part of the product itself (labeling, data extraction, etc.), I also find alternative means and require consensus between them to counterbalance the LLM.
+- Budget caps, and a decision on how to gracefully degrade when the cap is reached.
 
 ## Use Cases for AI vs. Deterministic Software
 
