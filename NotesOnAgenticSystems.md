@@ -70,6 +70,18 @@ Best practices and tactics:
 - KV-cache: stable prefix (no timestamps at the top), append-only context, deterministic serialization. Cached input tokens can be ~10x cheaper.
 - Deterministic first: assemble the context in code wherever possible and leave to the model only what can't be specified.
 
+## Designing MCPs
+
+Based on Anthropic's [Writing Effective Tools for Agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Aizawa) and the MCP spec's [Security Best Practices](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices). Tools are a contract between deterministic software and a non-deterministic agent, so they are designed for the agent, not mirrored from an API.
+
+- Workflows, not endpoints: a few targeted tools for high-impact tasks instead of wrapping every API endpoint. Consolidate multi-step operations (`schedule_event` over `list_users` + `list_events` + `create_event`) and prefer search over list.
+- Namespacing: prefix by service and resource (`asana_projects_search`) so overlapping tools stay distinguishable across servers.
+- Descriptions as onboarding: explain niche terms, query formats and relations between resources as to a new hire. Unambiguous parameter names (`user_id`, not `user`) and strict, typed schemas.
+- Meaningful, token-efficient output: natural-language names over opaque IDs, a `response_format` (concise or detailed), pagination, filtering and truncation with sensible defaults. Errors and truncation notices tell the agent what to do next, not just a code or traceback.
+- Read vs. write: mark tools with annotations (read-only, destructive, open-world) and keep state-changing tools typed and permissioned, with a separate commit step for anything that touches the physical system.
+- Security: least-privilege scopes escalated incrementally, never pass the client's token through to downstream APIs (accept only tokens issued to the server), sessions are not authentication, and local servers run sandboxed over `stdio`. Tool output is untrusted input to the agent.
+- Evaluation: prototype in a local server, then run realistic multi-call tasks with verifiable outcomes and held-out sets. Track tool calls, tokens and errors, read the transcripts, and let an agent refactor the tools from them.
+
 ## Autonomy Spectrum
 
 How AI earns more autonomy:
