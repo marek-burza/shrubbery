@@ -137,3 +137,9 @@ How AI earns more autonomy:
 ### Sandboxes
 
 - [gVisor](https://github.com/google/gvisor), [Firecracker](https://github.com/firecracker-microvm/firecracker): isolation for agent-executed code.
+
+### Agent Coordination
+
+- Orchestration frameworks (in-process): [LangGraph](https://github.com/langchain-ai/langgraph) (state graph), [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) (handoffs), [Google ADK](https://github.com/google/adk-python) (sequential, parallel and loop workflow agents), [CrewAI](https://github.com/crewAIInc/crewAI) (role-based crews).
+- [A2A](https://github.com/a2aproject/A2A) (Linux Foundation): protocol for agent-to-agent discovery and task delegation, complementing MCP (agent-to-tool).
+- Event buses for loosely coupled agents: MQTT ([Mosquitto](https://github.com/eclipse-mosquitto/mosquitto), [EMQX](https://github.com/emqx/emqx); the shop-floor and IoT standard), [Kafka](https://github.com/apache/kafka) (durable, replayable event log), [NATS](https://github.com/nats-io/nats-server) (lightweight, cloud and edge).
