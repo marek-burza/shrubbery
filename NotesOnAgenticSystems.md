@@ -57,3 +57,9 @@ How AI earns more autonomy:
 - Leading indicators: Share of workflow executions with use of AI/agent. Additionally, a share of these executions which were sustained (were not corrected, redone, etc.).
 - Real indicators: Domain oriented, such as cycle/turnaround time stats, etc.
 - Guardrail indicators: quality trend, incident trend, complexity trend.
+
+## Agentic Tech
+
+### Prompt Programming & Optimization
+
+- [DSPy](https://github.com/stanfordnlp/dspy) (Stanford NLP): declarative framework for programming LLMs in Python instead of hand-writing prompts. Pipelines are composed of modules with typed signatures (inputs and outputs), and optimizers (e.g. MIPROv2, GEPA) tune the prompts, few-shot examples or weights against a metric on a dataset.
