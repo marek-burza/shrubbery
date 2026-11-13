@@ -115,25 +115,24 @@ How AI earns more autonomy:
 ### Prompt Programming & Optimization
 
 - [DSPy](https://github.com/stanfordnlp/dspy) (Stanford NLP): declarative framework for programming LLMs in Python instead of hand-writing prompts. Pipelines are composed of modules with typed signatures (inputs and outputs), and optimizers (e.g. MIPROv2, GEPA) tune the prompts, few-shot examples or weights against a metric on a dataset.
-- Structured outputs: [Instructor](https://github.com/567-labs/instructor), [Outlines](https://github.com/dottxt-ai/outlines).
 
 ### Durable Workflows
 
-- [Temporal](https://github.com/temporalio/temporal), [Restate](https://github.com/restatedev/restate): retries, idempotency and long-running human approvals.
+- [Temporal](https://github.com/temporalio/temporal): retries, idempotency and long-running human approvals.
 
 ### Policy Engines
 
-- [OPA](https://github.com/open-policy-agent/opa), [Cedar](https://github.com/cedar-policy/cedar): action authorization outside the prompt.
+- [OPA](https://github.com/open-policy-agent/opa): action authorization outside the prompt.
 
 ### Observability & Evals
 
-- [Langfuse](https://github.com/langfuse/langfuse), [Arize Phoenix](https://github.com/Arize-ai/phoenix): tracing of every model and tool call.
-- [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai), [promptfoo](https://github.com/promptfoo/promptfoo), [Ragas](https://github.com/vibrantlabsai/ragas): eval harnesses (Ragas for RAG).
+- [Langfuse](https://github.com/langfuse/langfuse) (ClickHouse): tracing of every model and tool call, datasets and LLM-as-judge scoring.
+- [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) (UK AI Security Institute): eval harness for tasks, agent trajectories and sandboxed tool use.
 
-### LLM Gateways
+### Model Access
 
-- [LiteLLM](https://github.com/BerriAI/litellm): one API over many providers, with routing, budgets and fallbacks.
+- [Pydantic AI](https://github.com/pydantic/pydantic-ai) (Pydantic team): one typed API over many providers, with validated structured outputs and fallback models, in-process instead of a separate proxy.
 
 ### Sandboxes
 
-- [gVisor](https://github.com/google/gvisor), [Firecracker](https://github.com/firecracker-microvm/firecracker), [E2B](https://github.com/e2b-dev/E2B): isolation for agent-executed code.
+- [gVisor](https://github.com/google/gvisor), [Firecracker](https://github.com/firecracker-microvm/firecracker): isolation for agent-executed code.
