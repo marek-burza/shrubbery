@@ -1475,7 +1475,7 @@ wheels = [
 
 [[package]]
 name = "nvidia-modelopt"
-version = "0.47.0"
+version = "0.48.0"
 source = { registry = "https://pypi.nvidia.com/" }
 dependencies = [
     { name = "ninja" },
@@ -1495,7 +1495,7 @@ dependencies = [
     { name = "tqdm" },
 ]
 wheels = [
-    { url = "https://pypi.nvidia.com/nvidia-modelopt/nvidia_modelopt-0.47.0-py3-none-any.whl", hash = "sha256:db13e62d7efe4a1512e8b8c3f479e28d64022306f94a194f13234e7dca1d3120" },
+    { url = "https://pypi.nvidia.com/nvidia-modelopt/nvidia_modelopt-0.48.0-py3-none-any.whl", hash = "sha256:bfcfd425eab15e05eccf065b58d11cc33f9c27b4859a6efb78aba74bfb9f225c" },
 ]
 
 [[package]]
@@ -2374,7 +2374,7 @@ requires-dist = [
     { name = "numerapi", specifier = ">=3.1.1" },
     { name = "numexpr", specifier = ">=2.14.1" },
     { name = "numpy", specifier = ">=2.5.4" },
-    { name = "nvidia-modelopt", specifier = ">=0.46.1" },
+    { name = "nvidia-modelopt", specifier = ">=0.48.0" },
     { name = "optuna", specifier = ">=5.0.0" },
     { name = "optuna-integration", specifier = ">=5.0.0" },
     { name = "pandas", specifier = ">=3.0.6" },
