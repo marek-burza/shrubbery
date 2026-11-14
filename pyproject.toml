@@ -40,7 +40,7 @@ dependencies = [
     "tqdm>=4.70.1",
     "typer>=0.28.0",
     "xgboost>=3.4.0",
-    "yfinance>=0.2.66",
+    "yfinance>=1.8.0",
 ]
 
 [project.scripts]
