@@ -55,7 +55,7 @@ dev = [
     "deptry>=0.25.1", # Dependency checker
     "pdbpp>=0.12.1", # Extension of Python debugger
     "pytest>=9.0.2", # Test runner
-    "ruff>=0.17.2", # Linter and formatter
+    "ruff>=0.17.5", # Linter and formatter
     "ty>=0.0.99", # Type checker
     "wat>=0.7.0", # Deep inspection of Python objects
 ]
