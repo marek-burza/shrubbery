@@ -2389,7 +2389,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.17.5" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.17.1" },
-    { name = "skfolio", specifier = ">=1.12.7" },
+    { name = "skfolio", specifier = ">=1.12.12" },
     { name = "sklearn-genetic-opt", specifier = ">=0.14.0" },
     { name = "tabulate", specifier = ">=0.10.0" },
     { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cu132" },
@@ -2413,7 +2413,7 @@ wheels = [
 
 [[package]]
 name = "skfolio"
-version = "1.12.7"
+version = "1.12.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "clarabel" },
@@ -2424,9 +2424,9 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/33/be/f662c9fd7f84ae22ae7e9b66d3aeb6f14f65328377bba069fbd0ada70876/skfolio-1.12.7.tar.gz", hash = "sha256:cdfd90328c2d90b325feada81f18223b14575a25c69e5124be4368c543a0c969", size = 1259726, upload-time = "2026-11-06T18:12:59.739Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/4a/f01b7fb2bfa1480de8f3e8963f7d8fbecadc80af55824132fcfc2820e308/skfolio-1.12.12.tar.gz", hash = "sha256:1030628e3c7301d33819604683b552906ec325840491e92edd910ec849e253b2", size = 1260740, upload-time = "2026-11-13T18:01:59.46Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/3e/e1965fddd65dece736c0b44c171f4180ab370fdb8e2c97bc90394965f585/skfolio-1.12.7-py3-none-any.whl", hash = "sha256:3bfcad64c1c8398fa8d8c46b0505d51c233344dbe6af1a103e4940b20a9a4e22", size = 1477907, upload-time = "2026-11-06T18:12:57.439Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/49/d61de316e640d1e8eb92db4cf88784429f59bb1c83ac91c78bca691f4d7b/skfolio-1.12.12-py3-none-any.whl", hash = "sha256:a2a2a208585a1ca004c80e241499efee1b5a11fa18b2742b819a0b9cd177873d", size = 1478914, upload-time = "2026-11-13T18:01:57.411Z" },
 ]
 
 [[package]]
