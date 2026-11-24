@@ -96,6 +96,15 @@ The `workspace/` directory (git-ignored) contains:
 
 - `financial-semantics` (`src/shrubbery/financial/semantics.py`) - looks up financial vocabulary, identifier schemes and definitions from third-party sources (FIBO incl. its ACTUS module, FIX Orchestra, ISO 10383 MIC and ISO 4217 code lists, EuroVoc, QuantLib-Python-Docs, skfolio, quantstats) and resolves identifiers against FIRDS, GLEIF and OpenFIGI, used through the `financial-semantics` skill. `sources` lists every source with version and licence, `schemes` lists the identifier schemes discovered in FIBO (plus a `builtin` vendor-symbol scheme) and whether each is resolvable, `identify VALUE` infers the scheme of a bare string offline from its syntax, check digit or code list, `resolve VALUE [--to SCHEME]` asks a registry what the identifier denotes, `term LABEL` returns definitions with their source, version and IRI. Sources are fetched lazily and cached in `data/semantics.db` (gitignored), registry answers for 30 days; `--refresh SOURCE` (or `all`) before the command redownloads and reindexes. `--json` on every command. Run `uv run financial-semantics --help` for the full surface. Caution: Notable gap is no Open Risk Manual, terms covered by it are best looked up by the agent directly online.
 
+## Code Style
+
+All Python code in the repo (`src/`, `tests/`, model scripts and the scripts of the skills in `.claude/skills/`) follows these rules:
+
+- Write code as small functions whose names state exactly what each does (e.g. `extract_zip_safely`, `report_unused_runtime_dependencies`).
+- Keep functions roughly under 30 lines with one responsibility each, short and readable enough for a single SWE to review. No long monolithic functions.
+
+**Why:** The code is audited personally by a single reviewer.
+
 ## Libraries
 
 - Financial market experiments can use the `QuantLib`, `skfolio` & `quantstats` to not reinvent the code from scratch.
