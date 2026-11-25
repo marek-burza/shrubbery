@@ -1,0 +1,1 @@
+30 14 * * 2-6 /bin/sh -c 'cd /home/*/projects/shrubbery; git pull; mkdir -p workspace/logs; for FILE in workspace/models/*.pkl; do MODEL=$(basename ${FILE\%.pkl}); /home/*/projects/shrubbery/run.sh -c "numerai-run --model $MODEL --diagnose none"; done; podman system prune -f --volumes; uv cache clean' > /tmp/numerai.out.log 2> /tmp/numerai.err.log
