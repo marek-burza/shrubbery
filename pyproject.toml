@@ -54,6 +54,7 @@ shrubbery-qwaude = "shrubbery.qwaude:app"
 dev = [
     "deptry>=0.25.1", # Dependency checker
     "pdbpp>=0.12.1", # Extension of Python debugger
+    "pyright>=1.1.414", # Language server for the coding agent
     "pytest>=9.0.2", # Test runner
     "ruff>=0.17.5", # Linter and formatter
     "ty>=0.0.104", # Type checker
