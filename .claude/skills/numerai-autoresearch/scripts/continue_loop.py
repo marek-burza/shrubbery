@@ -39,7 +39,9 @@ REASON = (
 
 
 def project_dir(event: dict) -> Path:
-    return Path(os.environ.get('CLAUDE_PROJECT_DIR') or event.get('cwd') or '.')
+    return Path(
+        os.environ.get('CLAUDE_PROJECT_DIR') or event.get('cwd') or '.'
+    )
 
 
 def loop_runs_in_session(project: Path, session: str) -> bool:
@@ -55,7 +57,9 @@ def work_is_in_flight(event: dict) -> bool:
 
 
 def message_states_blocker(message: str) -> bool:
-    return any(line.lstrip().startswith('BLOCKED:') for line in message.splitlines())
+    return any(
+        line.lstrip().startswith('BLOCKED:') for line in message.splitlines()
+    )
 
 
 def turn_may_end(event: dict, project: Path, session: str) -> bool:
@@ -81,7 +85,9 @@ def read_nudge_state(nudges: Path) -> dict:
 
 
 def consecutive_nudges(state: dict, session: str, progress: int) -> int:
-    same = state.get('session') == session and state.get('progress') == progress
+    same = (
+        state.get('session') == session and state.get('progress') == progress
+    )
     return state.get('count', 0) if same else 0
 
 
@@ -90,8 +96,14 @@ def report_stalled_loop(count: int) -> None:
     print(json.dumps({'systemMessage': message}))
 
 
-def send_loop_back(nudges: Path, session: str, progress: int, count: int) -> None:
-    nudges.write_text(json.dumps({'session': session, 'progress': progress, 'count': count + 1}))
+def send_loop_back(
+    nudges: Path, session: str, progress: int, count: int
+) -> None:
+    nudges.write_text(
+        json.dumps(
+            {'session': session, 'progress': progress, 'count': count + 1}
+        )
+    )
     print(json.dumps({'decision': 'block', 'reason': REASON}))
 
 

@@ -134,7 +134,8 @@ EstimatorConfig(
                 (
                     'target',
                     NumeraiTargetSelector(
-                        estimator=LGBMRegressor(...),  # the learner as it is configured today
+                        # the learner as it is configured today
+                        estimator=LGBMRegressor(...),
                     ),
                 ),
             ],
@@ -155,7 +156,9 @@ EstimatorConfig(
         population_config=PopulationConfig(
             initializer='smart',
         ),
-        runtime_config=RuntimeConfig(n_jobs=1, parallel_backend='auto', use_cache=True, verbose=True),
+        runtime_config=RuntimeConfig(
+            n_jobs=1, parallel_backend='auto', use_cache=True, verbose=True
+        ),
         optimization_config=OptimizationConfig(
             local_search=True,
             local_search_top_k=1,
@@ -165,7 +168,7 @@ EstimatorConfig(
             fitness_sharing=True,
         ),
     ),
-),
+)
 ```
 
 Optuna search (same `estimator`, `cv` and `scoring`; only the wrapper and its budget knobs differ):
@@ -185,7 +188,7 @@ EstimatorConfig(
         n_jobs=1,
         verbose=10,
     ),
-),
+)
 ```
 
 Imports (add whichever you use):
@@ -194,7 +197,12 @@ Imports (add whichever you use):
 from optuna.distributions import CategoricalDistribution
 from optuna_integration.sklearn import OptunaSearchCV
 from sklearn_genetic import GASearchCV
-from sklearn_genetic.config import EvolutionConfig, OptimizationConfig, PopulationConfig, RuntimeConfig
+from sklearn_genetic.config import (
+    EvolutionConfig,
+    OptimizationConfig,
+    PopulationConfig,
+    RuntimeConfig,
+)
 from sklearn_genetic.schedules import ExponentialAdapter, InverseAdapter
 from sklearn_genetic.space import Categorical
 ```
