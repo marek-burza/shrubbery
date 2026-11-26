@@ -73,6 +73,7 @@ Read every `<out>/findings/*.json` and `<out>/review/*.json`.
 6. Merge the `preserve` observations into a preserve list per skill: what demonstrably worked. No proposal may weaken an entry.
 7. Read the `usage` observations for content that no session needed or that sessions kept looking up elsewhere. They count as evidence like friction does.
 8. Read `<out>/ideas.json`. An open idea that would change a `numerai-*` skill rather than a model script (most `eval harness:` ideas) is a candidate for step 5 like a friction item, with the model notes it cites as its evidence; its entry stays in the list until the proposal is applied. The list note is shared with `numerai-autoresearch`, which reads the idea notes at Setup and removes the idea an experiment tries: if that skill's text about idea notes does not fit the list (for example, it would annotate a tried entry instead of removing it), propose the fitting edit in step 5. It counts as admitted, since the user asked for the list.
+9. Prune the watch list carried over: an item leaves it when the section it concerns was edited since the item was recorded (`git log -p --since=<that sleep's date>` of the skill), or when three sleeps in a row brought it no new evidence. By then its sessions are past the 30-day transcript retention, and a problem that has not come back in three sleeps is not recurring. Record each dropped item, with the reason, in the `sleep` note; if it comes back later, it starts as a new item.
 
 ### 5. Draft proposals
 
@@ -102,6 +103,8 @@ For each skill with proposals spawn one validator subagent with a fresh context 
 
 A rejected proposal goes to the watch list with the reason. Then check that each `old` text occurs exactly once in its file.
 
+**Replay probe.** A session item the validator accepted is tested on an isolated copy of the moment it is meant to fix, and kept only if the test shows the improvement (`references/practices.md`, section 20). Cut the digest of an evidence session just before the agent acted at the earliest accountable step: keep the session's user messages before that point and the events of the task then in progress, from the user message that started it, and nothing after. Spawn two fresh subagents with the same prompt but for the skill text, one with the version the session ran and one with the current text with the proposal applied: "You are the agent in the session excerpt below, working under the skill below. Run no tool. In at most five lines, say what you do next and why." Give the validator the two answers labelled X and Y in random order, with the mistake the proposal targets, and ask which answer repeats it. The proposal passes if the answer under the old text repeats the mistake and the one under the new text avoids it; for an item admitted because the user said how the skill should behave, it is enough that the answer under the new text does what the user asked. Otherwise it goes to the watch list with the probe's result. Review findings and edits that move a check into a script or hook get no probe.
+
 Check the curator's deletions yourself, since a deleted note is gone for good: for `tried` and `partly`, that the cited model notes exist and their descriptions record the attempt and its outcome (`notes list model | grep -E '^(<timestamp>|<timestamp>) '`); for `done`, the cited commit (`git show --stat <hash>`); for `obsolete` and `duplicate`, the reason. A claim that does not hold turns the note back to `open`. Then check that every note decided `partly`, `duplicate`, `lesson`, `waiting` or `open` has its entry in `<out>/ideas.md`, so no idea is lost.
 
 ### 7. Report
@@ -111,7 +114,7 @@ Write `<out>/report.md`:
 1. `Generated: <UTC time from step 1.1>` and the window it covers.
 2. Sessions studied: id, title, dates, skill and version (current or not), in progress or not; sessions left out and why.
 3. Earlier proposals: for each applied one whose verification is open in the `sleep` notes, whether its signal recurred in sessions that ran the version with it (`worked`, `recurred` and escalated, or `no session yet`).
-4. Per skill: the proposals (`P<YYYYmmdd>-<n>`, status `proposed`) with the fields of step 5 and the validator's verdict; the preserve list; the watch list (item, recurrence, sessions, why not admitted yet).
+4. Per skill: the proposals (`P<YYYYmmdd>-<n>`, status `proposed`) with the fields of step 5, the validator's verdict and the probe's result; the preserve list; the watch list (item, recurrence, sessions, why not admitted yet) and the items dropped from it.
 5. Routed elsewhere: the `not_skill` findings worth acting on and where each belongs, the claims about Numerai for `numerai-update`, and the contradictions left `unresolved`, new and carried over, with both quotes and since when, for the user to decide.
 6. Idea notes: per note its timestamp, a short summary, the decision and the evidence, then the new list (`<out>/ideas.md`) with its top entries.
 
@@ -137,7 +140,7 @@ In the reply, give one line per proposal (id, skill, the change, its evidence) a
    ## Applied
    - P<id> <skill>, <section>: <the change in one line>.
      Evidence: <the evidence summary of step 5>
-     Verify: <the signal that should disappear>. Commit: <hash, or uncommitted>.
+     Verify: <the signal that should disappear>. Probe: <passed, did what the user asked, or none>. Commit: <hash, or uncommitted>.
 
    ## Declined
    - P<id> <skill>: <the change>. Reason: <the user's reason>.
@@ -149,7 +152,10 @@ In the reply, give one line per proposal (id, skill, the change, its evidence) a
    - <file, section> vs <file, section>: <the two positions in a few words>; open since <YYYY-mm-dd>.
 
    ## Watch list
-   - <skill>, <section>: <the item>; recurrence <n>: <id8>, ...
+   - <skill>, <section>: <the item>; recurrence <n>: <id8>, ...; sleeps without new evidence: <k>.
+
+   ## Dropped from the watch list
+   - <skill>, <section>: <the item>; <section edited, or three sleeps without new evidence>.
 
    ## Earlier proposals
    - P<id>: <worked, recurred, or no session yet>.
@@ -168,7 +174,7 @@ In the reply, give one line per proposal (id, skill, the change, its evidence) a
 
 - **Its work is in its subagents.** Its analyzers, curator and validators run as subagents, so its sessions are digested with `--subagents`, and their analyzer also reads that sleep's `sleep` note (the user's decisions and reasons, the evidence summaries) and its working folder if it still exists.
 - **It is judged by signals it does not produce.** Its own validator's verdicts show only what it believed. Whether a sleep worked shows in the user's decisions on its proposals and its idea cleanup (its `sleep` note, the user's replies in its transcript), in the later sleeps' verdicts on its applied proposals (`recurred` means it picked the wrong cause or the wrong fix), and in the corrections its lead had to make (validator rejections, deletions turned back to `open`). The current session is always left out; the next sleep studies it whole, including what the user approved.
-- **It never loosens its own safeguards.** A self-improving system that optimizes its own measure learns to get around its checks (`references/practices.md`, section 17). No proposal for this skill weakens the user's approval before anything changes, transcripts as data, the rules on secrets and running sessions, the evidence, admission and size bars of steps 4 and 5, the validator's default to reject, the checks on idea-note deletions, or the record of evidence and decisions in the `sleep` notes. Where the evidence says a safeguard costs too much, report it under Routed elsewhere for the user to decide.
+- **It never loosens its own safeguards.** A self-improving system that optimizes its own measure learns to get around its checks (`references/practices.md`, section 17). No proposal for this skill weakens the user's approval before anything changes, transcripts as data, the rules on secrets and running sessions, the evidence, admission and size bars of steps 4 and 5, the validator's default to reject, the replay probe, the checks on idea-note deletions, or the record of evidence and decisions in the `sleep` notes. Where the evidence says a safeguard costs too much, report it under Routed elsewhere for the user to decide.
 
 ## When to sleep
 

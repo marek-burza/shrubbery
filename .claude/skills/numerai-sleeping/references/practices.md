@@ -21,6 +21,7 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 17. Improve the improver, not its checks
 18. Keep the evidence with the decision
 19. Review the text, not only the sessions
+20. Test on a copy, prune what is consolidated
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -72,9 +73,9 @@ Applied: proposals are exact `old`/`new` replacements, at most three per skill p
 
 ## 9. Validate without a verifier
 
-Both skill-revision papers re-execute every candidate: SkillAdaptor accepts an update only when the measured change is at least zero [10]; SkillRevise keeps the best observed version under a success-gated utility, and warns that "sparse or misaligned tests can lead revision to overfit visible checks" [11]. A Numerai experiment takes hours, so re-execution is out. `dream-skill` validates with an independent agent with a fresh context that defaults to reject (it rejected 2 of 18 proposals in one self-reported run) and tags anything it cannot verify [5].
+Both skill-revision papers re-execute every candidate: SkillAdaptor accepts an update only when the measured change is at least zero [10]; SkillRevise keeps the best observed version under a success-gated utility, and warns that "sparse or misaligned tests can lead revision to overfit visible checks" [11]. A Numerai experiment takes hours, so re-executing whole sessions is out, but a single decision can be replayed (20). `dream-skill` validates with an independent agent with a fresh context that defaults to reject (it rejected 2 of 18 proposals in one self-reported run) and tags anything it cannot verify [5].
 
-Applied: a fresh validator per skill that defaults to reject, with a counterfactual question (would the agent have acted differently at the evidence step?); the next sleep closes the loop by checking whether the signal recurred in sessions that ran the new version.
+Applied: a fresh validator per skill that defaults to reject, with a counterfactual question (would the agent have acted differently at the evidence step?), then a replay probe of that step (20); the next sleep closes the loop by checking whether the signal recurred in sessions that ran the new version.
 
 ## 10. Judge salience by recurrence and cost, not by rigid rules
 
@@ -136,6 +137,12 @@ Learning only from sessions finds a problem after an agent has tripped over it, 
 
 Applied: one reviewer per changed skill looks for contradictions (settled by the user's decisions, then the experiments log, then primary sources, otherwise left to the user), repetition (one home per fact, the rest in references), ambiguity (only with a known resolution), unfounded assumptions (their reason looked up first, then judged supported, testable as an idea, contradicted or unsupported) and simplification (never at the cost of a rare but costly case or a safeguard). Reviewers read the other skills and their references too, and keep one term per concept across the skills. Its findings need no recurrence but must hold up before the validator, and a structural proposal moves text verbatim, checked against a map from each old place to the new one. Each validator sees all of a sleep's proposals and checks them against every skill as it will read afterwards, so a fix to one skill cannot open a contradiction with another; an unresolved contradiction stays in the `sleep` notes until the user settles it.
 
+## 20. Test on a copy, prune what is consolidated
+
+Behrouz et al. at Google Research train an LLM in alternating wake and sleep phases [18][19]. In sleep, consolidation distills what the fast, short-term part of the model learned into newly added low-rank capacity, leaving the old parameters frozen, and then resets the fast parameters ("synaptic pruning"). Dreaming generates synthetic data, picks it by gradient-based importance plus random samples, trains isolated copies, and keeps an update only if downstream performance improves. The authors report 48.9% knowledge incorporation on SQuAD and near-zero forgetting in continual translation, and that removing dreaming dropped SQuAD to 35.7 (this ablation is from a model-extracted summary of the paper, not verified against its text). The method works on weights, so it transfers here by analogy only, and it has no rule for conflicts between old and new knowledge.
+
+Applied: the replay probe tests an edit on an isolated copy of the moment it targets, under the old and the new skill text, judged blind, and keeps it only if the old text repeats the mistake and the new text avoids it; the `sleep` note records the result, so later sleeps can see whether probe-passed edits held. As their method resets its short-term store once consolidated, the watch list drops an item when its section was edited or after three sleeps without new evidence. Not adopted: writing new knowledge into new places instead of editing old text (it works against simplification and invites the bloat of section 11), the weight-level mechanisms, and synthetic dreams (costly, and the review of section 19 covers gaps no session reached).
+
 ## Sources
 
 1. Lance Martin, "The components of agent memory", Anthropic Engineering, 2026-11-06. https://www.anthropic.com/engineering/components-of-agent-memory
@@ -155,3 +162,5 @@ Applied: one reviewer per changed skill looks for contradictions (settled by the
 15. Zhang, Hu, Lu, Lange, Clune, "Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents", arXiv 2505.22954, 2025. https://arxiv.org/abs/2505.22954
 16. "Boffins found self-improving AI sometimes cheated", The Register, 2025-06-02. https://www.theregister.com/2025/06/02/self_improving_ai_cheat/
 17. G. K. Chesterton, *The Thing* (1929), chapter "The Drift from Domesticity": the parable known as Chesterton's fence.
+18. Ali Behrouz, Vahab Mirrokni, "The SLEEP framework: a new way for LLMs to retain knowledge in continual learning", Google Research blog, 2026-10-27. https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/
+19. Ali Behrouz, Farnoosh Hashemi, Adel Javanmard, Vahab Mirrokni, "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories", arXiv 2606.03979, 2026. https://arxiv.org/abs/2606.03979
