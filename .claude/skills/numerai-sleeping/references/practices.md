@@ -23,6 +23,7 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 19. Review the text, not only the sessions
 20. Test on a copy, prune what is consolidated
 21. Hold out the test, scope the lessons
+22. Check the contracts between agents
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -150,6 +151,12 @@ Dream-RSI [20] improves an agent's exploration strategy, written as code, offlin
 
 Applied: when an item's evidence spans several sessions, its edit is drafted without the most recent one and the replay probe runs on that one (held-out); with a single session the probe is in-sample and recorded as such. A lesson that rules out an approach carries the conditions it was learned under (data version, feature set, stride or full training, the models in the ensemble), the curator reopens it when those no longer hold, the reviewer flags prohibitions without such scope, and the validator rejects them, preferring to rank an approach lower over ruling it out. Not adopted: the quality-cost score and parallelism penalty, which fit numeric search only, and base rates for ranking ideas, which would need every model note classified by kind.
 
+## 22. Check the contracts between agents
+
+MASS [21] improves a text workflow for a team of subagents (each subagent's role, its instructions, the output contract it must deliver, and the order of hand-offs) with one model acting as executor, judge and optimizer, judging each candidate pairwise against the current best, and then fine-tunes the model on the best results. Its analysis found that the contracts and the order of hand-offs carried more task information than the role and instruction text, estimated on 8 to 9 tasks and so weakly supported. It also found the optimizer to be the bottleneck, the search noisy ("Strong iterations can be followed by sharp performance regressions"), and edit size barely related to outcome (|ρ| ≤ 0.12, from a model-extracted summary), and it argues that a loop in which one model does everything can reinforce its own blind spots. About a fifth of the paper was read verbatim, the rest as a summary, and its last part not at all.
+
+Applied: the reviewer checks the contracts between the skills, between a skill and its subagent briefs, and with the code in `src/`: what one side writes and another reads must be described alike, with the writer's definition as the reference. The live case at the time: `numerai-evaluation` described the `model` note without the `sharpe=` and `hours=` fields `numerai-autoresearch` writes. The cap of three edits per skill is a choice for reviewability, not a performance claim, which this paper's edit-size finding does not support either way. Not adopted: repeated probe draws against judging noise (cost), a check that later sessions adopt a fix rather than only lose its problem, and a validator from another model family (none is available, and the user's approval is the independent judge).
+
 ## Sources
 
 1. Lance Martin, "The components of agent memory", Anthropic Engineering, 2026-11-06. https://www.anthropic.com/engineering/components-of-agent-memory
@@ -172,3 +179,4 @@ Applied: when an item's evidence spans several sessions, its edit is drafted wit
 18. Ali Behrouz, Vahab Mirrokni, "The SLEEP framework: a new way for LLMs to retain knowledge in continual learning", Google Research blog, 2026-10-27. https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/
 19. Ali Behrouz, Farnoosh Hashemi, Adel Javanmard, Vahab Mirrokni, "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories", arXiv 2606.03979, 2026. https://arxiv.org/abs/2606.03979
 20. Tong Zheng et al. (University of Maryland, Google DeepMind and others), "Dream-RSI: Recursive Self-Improvement through Evolving Worlds", arXiv 2609.14858, v2 2026-10-06. https://arxiv.org/abs/2609.14858
+21. Hyunin Lee, Jinglue Xu, Jeffrey Seely, Donghyun Lee, Somayeh Sojoudi, Matei Zaharia, Yujin Tang, "Recursive Self-Improvement through Multi-Agent Self-Supervision" (MASS), arXiv 2610.12176, 2026-10-08. https://arxiv.org/abs/2610.12176 ; Sakana AI's page on it: https://pub.sakana.ai/mass/
