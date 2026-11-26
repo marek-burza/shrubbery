@@ -218,7 +218,7 @@ def main(
     ] = DiagnoseMode.HOSTED,
     feature_set_name: Annotated[
         str, typer.Option(help='Name of the Numerai feature set')
-    ] = 'small',
+    ] = 'medium',
     diagnose_embargo: Annotated[
         int,
         typer.Option(
