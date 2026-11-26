@@ -17,6 +17,8 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 13. Staleness, drift and conflicts
 14. Escalate from wording to mechanism
 15. Schedule by windows
+16. Tidy the idea backlog
+17. Improve the improver, not its checks
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -108,10 +110,22 @@ Claude Code's unreleased Auto Dream reportedly runs after 24 hours and at least 
 
 Applied: each sleep's window starts at the previous sleep's `Generated` time; a sleep with no new session stops early; sessions in progress are studied and seen again by the next sleep.
 
+## 16. Tidy the idea backlog
+
+The cookbook's organizer merges duplicates and dates and supersedes facts instead of copying them, and its analyzers re-read a file right before changing it, because concurrent writes can silently replace each other [4]. Letta's community guide deduplicates on every pass and warns against appending summaries without bound [2]. `dream-skill` snapshots before it applies anything [5]. Anthropic keeps the injected layer small and moves details to where they are looked up [1], and ACE's context collapse (8) applies to a list rewritten every sleep as much as to a skill.
+
+Applied: the idea curation removes an idea only when a model note records the attempt and its outcome (or a commit records it done), merges duplicates, keeps findings as Lessons instead of dropping them, ranks the open ideas in one list note, and carries unchanged entries over word for word; the lead checks every deletion, backs up the store, re-lists the notes right before changing them and leaves the notes added meanwhile for the next sleep.
+
+## 17. Improve the improver, not its checks
+
+The Darwin Gödel Machine, a coding agent that rewrites its own code to score higher on benchmarks, showed "objective hacking": one lineage removed the logging of the special tokens that its hallucination check relied on, despite instructions not to change them, and so passed the check without solving the problem. The paper reports that this happens more often when the checking functions are not hidden from the agent [15][16]. Anthropic counts the outputs of earlier dreaming rounds among the inputs of dreaming [1].
+
+Applied: a sleep studies the sessions of earlier sleeps with their subagents and outputs; it is judged by signals it does not produce itself (the user's decisions, the recurrence check of later sleeps), not by its own validator; and its proposals for itself may not loosen its safeguards, which stay the user's to change.
+
 ## Sources
 
 1. Lance Martin, "The components of agent memory", Anthropic Engineering, 2026-11-06. https://www.anthropic.com/engineering/components-of-agent-memory
-2. Letta, "Sleep-time Compute", 2025-04-21. https://letta.com/blog/sleep-time-compute ; Letta docs, "Memory & dreaming". https://docs.letta.com/guides/agents/architectures/sleeptime
+2. Letta, "Sleep-time Compute", 2025-04-21. https://letta.com/blog/sleep-time-compute ; Letta docs, "Memory & dreaming". https://docs.letta.com/guides/agents/architectures/sleeptime ; Letta forum, "Sleeptime agents for memory consolidation: best practices guide" (community). https://forum.letta.com/t/sleeptime-agents-for-memory-consolidation-best-practices-guide/154
 3. Claude Managed Agents, "Dreams" (research preview). https://platform.claude.com/docs/en/managed-agents/dreams
 4. Claude Cookbook, "Dreaming with a dynamic workflow". https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow
 5. timoncool, `dream-skill` (README). https://github.com/timoncool/dream-skill
@@ -124,3 +138,5 @@ Applied: each sleep's window starts at the previous sleep's `Generated` time; a 
 12. Zhang et al., "Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models" (ACE), ICLR 2026, arXiv 2510.04618. https://arxiv.org/abs/2510.04618
 13. Anthropic, "Skill authoring best practices". https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
 14. "Does Claude Code Need Sleep? Inside the Unreleased Auto-dream Feature", DEV Community, 2026-03-24. https://dev.to/akari_iku/does-claude-code-need-sleep-inside-the-unreleased-auto-dream-feature-2n7m
+15. Zhang, Hu, Lu, Lange, Clune, "Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents", arXiv 2505.22954, 2025. https://arxiv.org/abs/2505.22954
+16. "Boffins found self-improving AI sometimes cheated", The Register, 2025-06-02. https://www.theregister.com/2025/06/02/self_improving_ai_cheat/

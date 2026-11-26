@@ -12,8 +12,9 @@ SAY (Claude's text), TOOL (a tool call), ERROR (a failed tool call), REJECT (a t
 user declined), TASK (a background task's status), HOOK (a hook that blocked Claude from
 stopping) or COMPACT (a compaction). Texts are cut at the given lengths; continuation lines are
 indented. A header counts the events and lists the skill files the session read, edited or used
-in a shell command. `--redact-env-file` replaces the values of that file's variables with
-`<NAME>`.
+in a shell command. `--subagents` appends a section per subagent transcript of the session
+(`<session>/subagents/agent-<id>.jsonl`, described by its `.meta.json`), digested alike.
+`--redact-env-file` replaces the values of that file's variables with `<NAME>`.
 
 Run from the repository root:
   python .claude/skills/numerai-sleeping/scripts/digest_session.py SESSION.jsonl \
@@ -73,6 +74,7 @@ class Limits:
 @dataclass
 class Digest:
     limits: Limits
+    sidechain: bool = False
     ai_title: str = ''
     custom_title: str = ''
     events: list[str] = field(default_factory=list)
@@ -95,6 +97,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument('transcript', type=Path)
     parser.add_argument('--redact-env-file', type=Path)
+    parser.add_argument('--subagents', action='store_true')
     parser.add_argument('--user-chars', type=int, default=3000)
     parser.add_argument('--say-chars', type=int, default=600)
     parser.add_argument('--idle-minutes', type=int, default=30)
@@ -300,7 +303,7 @@ def digest_attachment(digest: Digest, record: dict) -> None:
 
 
 def digest_record(digest: Digest, record: dict) -> None:
-    if record.get('isSidechain'):
+    if record.get('isSidechain') and not digest.sidechain:
         return
     match record.get('type'):
         case 'user':
@@ -342,20 +345,58 @@ def format_skill_files(digest: Digest) -> str:
     )
 
 
+def format_span(digest: Digest) -> str:
+    if not digest.first or not digest.last:
+        return '?'
+    span = format_duration((digest.last - digest.first).total_seconds())
+    return f'{digest.first:%Y-%m-%d %H:%M} to {digest.last:%Y-%m-%d %H:%M} UTC ({span})'
+
+
+def summary_lines(digest: Digest) -> list[str]:
+    return [
+        f'- span: {format_span(digest)}',
+        f'- events: {format_counter(digest.kinds)}',
+        f'- idle before user messages: {format_duration(digest.idle_seconds)}',
+        f'- tools: {format_tools(digest) or "none"}',
+        f'- background tasks: {format_counter(digest.tasks) or "none"}',
+        f'- skill files: {format_skill_files(digest) or "none"}',
+    ]
+
+
 def header_lines(transcript: Path, digest: Digest) -> list[str]:
-    span = digest.last - digest.first if digest.first and digest.last else None
     title = digest.custom_title or digest.ai_title
     return [
         f'# Session {transcript.stem}: {title}',
-        f'- span: {digest.first:%Y-%m-%d %H:%M} to {digest.last:%Y-%m-%d %H:%M} UTC '
-        f'({format_duration(span.total_seconds()) if span else "?"})',
-        f'- events: {format_counter(digest.kinds)}',
-        f'- idle before user messages: {format_duration(digest.idle_seconds)}',
-        f'- tools: {format_tools(digest)}',
-        f'- background tasks: {format_counter(digest.tasks) or "none"}',
-        f'- skill files: {format_skill_files(digest) or "none"}',
+        *summary_lines(digest),
         '',
     ]
+
+
+def digest_transcript(transcript: Path, digest: Digest) -> Digest:
+    for record in read_records(transcript):
+        digest_record(digest, record)
+    return digest
+
+
+def subagent_transcripts(transcript: Path) -> list[Path]:
+    subagents = transcript.parent / transcript.stem / 'subagents'
+    return sorted(subagents.glob('agent-*.jsonl'))
+
+
+def read_subagent_meta(subagent: Path) -> dict:
+    try:
+        return json.loads(subagent.with_suffix('.meta.json').read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def subagent_lines(subagent: Path, limits: Limits) -> list[str]:
+    digest = digest_transcript(subagent, Digest(limits, sidechain=True))
+    meta = read_subagent_meta(subagent)
+    name = subagent.stem.removeprefix('agent-')
+    kind = meta.get('agentType', '?')
+    title = f'## Subagent {name} ({kind}): {meta.get("description", "")}'
+    return ['', title, *summary_lines(digest), '', *digest.events]
 
 
 def read_env_values(env_file: Path) -> dict[str, str]:
@@ -377,10 +418,12 @@ def redact(text: str, values: dict[str, str]) -> str:
 def main() -> None:
     args = parse_args()
     limits = Limits(args.user_chars, args.say_chars, args.idle_minutes)
-    digest = Digest(limits)
-    for record in read_records(args.transcript):
-        digest_record(digest, record)
-    text = '\n'.join(header_lines(args.transcript, digest) + digest.events)
+    digest = digest_transcript(args.transcript, Digest(limits))
+    lines = header_lines(args.transcript, digest) + digest.events
+    if args.subagents:
+        for subagent in subagent_transcripts(args.transcript):
+            lines += subagent_lines(subagent, limits)
+    text = '\n'.join(lines)
     if args.redact_env_file:
         text = redact(text, read_env_values(args.redact_env_file))
     print(text)

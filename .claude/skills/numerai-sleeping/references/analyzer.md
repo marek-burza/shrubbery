@@ -39,6 +39,14 @@ When unsure between a skill cause and `not_skill`, ask whether a reasonable agen
 
 **Usage**: which skill files were read or run (the digest header lists them), parts of the skill the session never needed, what the agent kept looking up elsewhere (a candidate to move into the skill), and paths the agent took that the skill did not anticipate.
 
+## A session that ran numerai-sleeping
+
+Its work was done by subagents, digested under `## Subagent` headings after the main timeline, and its results are in its output directory, which your prompt names: `report.md` (the proposals, the idea decisions, and the statuses and reasons the user gave), `findings/` and `ideas.json`. The reports of later sleeps, if your prompt names any, give their verdicts on its applied proposals.
+
+Judge it by what it did not produce itself: its own validator's verdicts show only what it believed. Friction signals, besides those above: a proposal or idea decision the user declined, changed or questioned; a proposal its validator rejected, or a deletion its lead turned back to `open` (say which step upstream got it wrong); evidence that does not say what it was cited for; a subagent that failed, overran or read whole raw transcripts; a sleep that ended before its report; a later sleep's `recurred` verdict on one of its proposals. Preserve signals: proposals the user approved that a later sleep found `worked`, and idea cleanups approved unchanged.
+
+Its safeguards are the user's (SKILL.md, Studying its own sessions): where one caused friction, describe it in `what` and leave `proposal` empty.
+
 ## Check
 
 - Every quote is verbatim from the digest or the transcript, at most 200 characters, with its `uuid8` and time.
