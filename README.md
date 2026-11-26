@@ -59,7 +59,7 @@ The `workspace/` directory (git-ignored) contains:
 
 **Model wrapper**: `model.py` - `NumeraiModel` binds an estimator to its feature and target names and exposes the `__call__(live_features, live_benchmark_models)` signature of Numerai's model upload. `fit` and `predict` leave out `feature_country`, and `unpack_numerai_features` decodes the int8 features and prepends the era (the `date` column) as the first column, as the number of weeks since the Unix epoch. In v6.0 the data has no index (`numerai_ticker` and `date` are ordinary columns), so `predict` returns a single `prediction` column on the input's `RangeIndex`, and the runner joins `numerai_ticker` and `date` back on (`NumeraiRunner.predict_with_ids`). The IDs are attached outside the artifact because it carries `NumeraiModel` by value, so a change to `predict` reaches only newly trained artifacts.
 
-**Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets. `augmentation.py` finds the riskiest features (largest change in target correlation between the first and second half of the eras).
+**Data layer**: `ingest.py` downloads/caches the Numerai datasets and reads feature sets and training targets.
 
 **Numerai API**: `napi.py` - shared `NumerAPI` client, model id resolution, saving of predictions to CSV in the shape of Numerai's v6.0 example notebook `hello_numerai.ipynb` (live: `numerai_ticker,prediction`, diagnostics: `numerai_ticker,date,prediction`), which raises on duplicate IDs or a `prediction` that is NaN or outside `[0, 1]`, and upload of tournament and diagnostic predictions with retries and back-off.
 
