@@ -22,6 +22,7 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 18. Keep the evidence with the decision
 19. Review the text, not only the sessions
 20. Test on a copy, prune what is consolidated
+21. Hold out the test, scope the lessons
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -143,6 +144,12 @@ Behrouz et al. at Google Research train an LLM in alternating wake and sleep pha
 
 Applied: the replay probe tests an edit on an isolated copy of the moment it targets, under the old and the new skill text, judged blind, and keeps it only if the old text repeats the mistake and the new text avoids it; the `sleep` note records the result, so later sleeps can see whether probe-passed edits held. As their method resets its short-term store once consolidated, the watch list drops an item when its section was edited or after three sleeps without new evidence. Not adopted: writing new knowledge into new places instead of editing old text (it works against simplification and invites the bloat of section 11), the weight-level mechanisms, and synthetic dreams (costly, and the review of section 19 covers gaps no session reached).
 
+## 21. Hold out the test, scope the lessons
+
+Dream-RSI [20] improves an agent's exploration strategy, written as code, offline: a development agent revises the strategy several times, each version is replayed against every recorded search tree by reading back the stored outcomes, and the best on average replaces the current one, which is always among the candidates. Using the whole accumulated history beat using only the latest round (1.90 vs 1.59), and turning history into prescriptive guidance in the prompt made results worse, which the authors say "may constrain exploration". Both ablations are on a single task and were read from a model-extracted summary of the paper; the authors select the winning version on the same history it was developed on, with no held-out data, and their Claude Code result on Terminal-Bench (0.7247 to 0.8090) is likewise unverified. SkillRevise warns that sparse tests "can lead revision to overfit visible checks" [11], and Anthropic found an over-strict rule ("record only failures") removed much of the benefit of memory [1].
+
+Applied: when an item's evidence spans several sessions, its edit is drafted without the most recent one and the replay probe runs on that one (held-out); with a single session the probe is in-sample and recorded as such. A lesson that rules out an approach carries the conditions it was learned under (data version, feature set, stride or full training, the models in the ensemble), the curator reopens it when those no longer hold, the reviewer flags prohibitions without such scope, and the validator rejects them, preferring to rank an approach lower over ruling it out. Not adopted: the quality-cost score and parallelism penalty, which fit numeric search only, and base rates for ranking ideas, which would need every model note classified by kind.
+
 ## Sources
 
 1. Lance Martin, "The components of agent memory", Anthropic Engineering, 2026-11-06. https://www.anthropic.com/engineering/components-of-agent-memory
@@ -164,3 +171,4 @@ Applied: the replay probe tests an edit on an isolated copy of the moment it tar
 17. G. K. Chesterton, *The Thing* (1929), chapter "The Drift from Domesticity": the parable known as Chesterton's fence.
 18. Ali Behrouz, Vahab Mirrokni, "The SLEEP framework: a new way for LLMs to retain knowledge in continual learning", Google Research blog, 2026-10-27. https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/
 19. Ali Behrouz, Farnoosh Hashemi, Adel Javanmard, Vahab Mirrokni, "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories", arXiv 2606.03979, 2026. https://arxiv.org/abs/2606.03979
+20. Tong Zheng et al. (University of Maryland, Google DeepMind and others), "Dream-RSI: Recursive Self-Improvement through Evolving Worlds", arXiv 2609.14858, v2 2026-10-06. https://arxiv.org/abs/2609.14858

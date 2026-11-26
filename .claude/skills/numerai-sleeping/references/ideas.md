@@ -18,7 +18,7 @@ You tidy the `idea` notes of the experiments log in `data/numerai.data`. An idea
 - `done`: carried out outside the experiments log, by a commit to shrubbery or a skill. Evidence: the commit.
 - `obsolete`: it no longer applies. It names a component, file, data version, metric or procedure that is gone, or a later model note settled the question. Evidence: what is gone, or that note.
 - `duplicate`: it says the same as another idea. Merge the two into one entry that keeps every `from=`.
-- `lesson`: a finding or a constraint rather than something to try (e.g. "tried and rejected, do not repeat", "the holdout predictions of A and B correlate 0.90"). It goes to the Lessons section, unless the `numerai-autoresearch` skill already states it, which makes it `done`.
+- `lesson`: a finding or a constraint rather than something to try (e.g. "tried and rejected, do not repeat", "the holdout predictions of A and B correlate 0.90"). It goes to the Lessons section, unless the `numerai-autoresearch` skill already states it, which makes it `done`. Record the conditions it was learned under, from the model notes behind it: data version, feature set, stride or full training, the models in the ensemble, the targets. Compare them with the current conditions (the newest model notes, the defaults in the code): a lesson learned under conditions that no longer hold is `open` again, as an entry that tests whether it still holds, with the old finding as its evidence. An earlier list's lesson without conditions gets them from its model notes, or says they are unknown.
 - `waiting`: open, but blocked until a date or a condition (e.g. months of live scores). It goes to the Waiting section with that condition.
 - `open`: not tried yet. It goes to one of the ranked sections.
 
@@ -58,7 +58,7 @@ Consolidated by numerai-sleeping on <YYYY-mm-dd>. Ranked within each section by 
 
 ## Lessons
 
-- <the finding or constraint> (from=..., evidence <model timestamps>)
+- <the finding or constraint> (from=..., evidence <model timestamps>; holds for <the conditions it was learned under>)
 ```
 
 `<out>/ideas.json`:

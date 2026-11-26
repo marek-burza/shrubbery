@@ -77,6 +77,8 @@ Read every `<out>/findings/*.json` and `<out>/review/*.json`.
 
 ### 5. Draft proposals
 
+When an item's evidence spans two or more sessions, set the most recent of them aside first: draft the edit from the others, and keep that session for the replay probe of step 6, so the probe tests the edit on a moment it was not written from.
+
 For each admitted item, at most three per skill, ranked by cost and recurrence, write:
 
 - **Edit**: the file, the section, the exact `old` text (it occurs once in the file) and its `new` text, or a new script or hook with its full content. For a structural proposal, the move plan instead: each block of text by its first words, from where to where, and the cross-reference left behind. Moved text stays verbatim; rewording it is a separate proposal for a later sleep.
@@ -98,12 +100,13 @@ For each skill with proposals spawn one validator subagent with a fresh context 
 3. It contradicts nothing in any `numerai-*` skill as that skill will read once all of this sleep's proposals are applied, nor `CLAUDE.md`, the user's decisions or the preserve list.
 4. It is general, not tailored to one session.
 5. It is the smallest edit that achieves it.
-6. The skill still serves its whole objective (its description and opening paragraph). For a structural proposal, every instruction of the moved text is found verbatim at its new place, and every cross-reference resolves.
-7. A proposal for `numerai-sleeping` loosens none of its safeguards (see Studying its own sessions).
+6. A rule that rules out an approach ("do not try", "never", an addition to a list of what may not be done) states the conditions its evidence was gathered under (data version, feature set, stride or full training, the models in the ensemble) and holds only under them. Where the evidence allows, it ranks the approach lower instead of ruling it out.
+7. The skill still serves its whole objective (its description and opening paragraph). For a structural proposal, every instruction of the moved text is found verbatim at its new place, and every cross-reference resolves.
+8. A proposal for `numerai-sleeping` loosens none of its safeguards (see Studying its own sessions).
 
 A rejected proposal goes to the watch list with the reason. Then check that each `old` text occurs exactly once in its file.
 
-**Replay probe.** A session item the validator accepted is tested on an isolated copy of the moment it is meant to fix, and kept only if the test shows the improvement (`references/practices.md`, section 20). Cut the digest of an evidence session just before the agent acted at the earliest accountable step: keep the session's user messages before that point and the events of the task then in progress, from the user message that started it, and nothing after. Spawn two fresh subagents with the same prompt but for the skill text, one with the version the session ran and one with the current text with the proposal applied: "You are the agent in the session excerpt below, working under the skill below. Run no tool. In at most five lines, say what you do next and why." Give the validator the two answers labelled X and Y in random order, with the mistake the proposal targets, and ask which answer repeats it. The proposal passes if the answer under the old text repeats the mistake and the one under the new text avoids it; for an item admitted because the user said how the skill should behave, it is enough that the answer under the new text does what the user asked. Otherwise it goes to the watch list with the probe's result. Review findings and edits that move a check into a script or hook get no probe.
+**Replay probe.** A session item the validator accepted is tested on an isolated copy of the moment it is meant to fix, and kept only if the test shows the improvement (`references/practices.md`, section 20). Cut the digest of the session set aside in step 5 (with a single evidence session, of that one) just before the agent acted at the earliest accountable step: keep the session's user messages before that point and the events of the task then in progress, from the user message that started it, and nothing after. Spawn two fresh subagents with the same prompt but for the skill text, one with the version the session ran and one with the current text with the proposal applied: "You are the agent in the session excerpt below, working under the skill below. Run no tool. In at most five lines, say what you do next and why." Give the validator the two answers labelled X and Y in random order, with the mistake the proposal targets, and ask which answer repeats it. The proposal passes if the answer under the old text repeats the mistake and the one under the new text avoids it; for an item admitted because the user said how the skill should behave, it is enough that the answer under the new text does what the user asked. Otherwise it goes to the watch list with the probe's result. A pass on the set-aside session is held-out; a pass on the only evidence session is in-sample and weaker, since the edit was written from that very moment: record which. Review findings and edits that move a check into a script or hook get no probe.
 
 Check the curator's deletions yourself, since a deleted note is gone for good: for `tried` and `partly`, that the cited model notes exist and their descriptions record the attempt and its outcome (`notes list model | grep -E '^(<timestamp>|<timestamp>) '`); for `done`, the cited commit (`git show --stat <hash>`); for `obsolete` and `duplicate`, the reason. A claim that does not hold turns the note back to `open`. Then check that every note decided `partly`, `duplicate`, `lesson`, `waiting` or `open` has its entry in `<out>/ideas.md`, so no idea is lost.
 
@@ -140,7 +143,7 @@ In the reply, give one line per proposal (id, skill, the change, its evidence) a
    ## Applied
    - P<id> <skill>, <section>: <the change in one line>.
      Evidence: <the evidence summary of step 5>
-     Verify: <the signal that should disappear>. Probe: <passed, did what the user asked, or none>. Commit: <hash, or uncommitted>.
+     Verify: <the signal that should disappear>. Probe: <passed held-out, passed in-sample, did what the user asked, or none>. Commit: <hash, or uncommitted>.
 
    ## Declined
    - P<id> <skill>: <the change>. Reason: <the user's reason>.
