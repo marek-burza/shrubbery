@@ -20,6 +20,7 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 16. Tidy the idea backlog
 17. Improve the improver, not its checks
 18. Keep the evidence with the decision
+19. Review the text, not only the sessions
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -129,6 +130,12 @@ Anthropic's agents record with a rule how it was known to be true, and its wiki 
 
 Applied: every sleep ends with a `sleep` note in the encrypted notes store, which records each proposal the user took up with an evidence summary that stands without the transcripts, its verification signal and its commit, each decline with the user's reason, the watch list, and each removed idea note with its evidence. The next sleep reads its window, declines and open verifications from these notes. Commit messages carry proposal ids only, since the repository is on GitHub.
 
+## 19. Review the text, not only the sessions
+
+Learning only from sessions finds a problem after an agent has tripped over it, and nothing in the passages no session reached. Anthropic's skill guidance reviews the text itself: "Does this paragraph justify its token cost?", one term per concept, no time-sensitive statements, references one level deep with a table of contents above 100 lines, one default instead of many options, no unexplained "voodoo constants", and instructions as specific as the task is fragile, leaving judgment where the task calls for it [13]. Longer instruction files reduce adherence [1]. A rule that looks unfounded may rest on a reason recorded elsewhere: do not take down a fence until you know why it was put up (Chesterton's fence) [17]. A conflict that the evidence cannot settle is marked, not guessed [4]. Restructuring by rewriting risks the collapse ACE measured (8), while text moved verbatim keeps its detail [12].
+
+Applied: one reviewer per changed skill looks for contradictions (settled by the user's decisions, then the experiments log, then primary sources, otherwise left to the user), repetition (one home per fact, the rest in references), ambiguity (only with a known resolution), unfounded assumptions (their reason looked up first, then judged supported, testable as an idea, contradicted or unsupported) and simplification (never at the cost of a rare but costly case or a safeguard). Its findings need no recurrence but must hold up before the validator, and a structural proposal moves text verbatim, checked against a map from each old place to the new one.
+
 ## Sources
 
 1. Lance Martin, "The components of agent memory", Anthropic Engineering, 2026-11-06. https://www.anthropic.com/engineering/components-of-agent-memory
@@ -147,3 +154,4 @@ Applied: every sleep ends with a `sleep` note in the encrypted notes store, whic
 14. "Does Claude Code Need Sleep? Inside the Unreleased Auto-dream Feature", DEV Community, 2026-03-24. https://dev.to/akari_iku/does-claude-code-need-sleep-inside-the-unreleased-auto-dream-feature-2n7m
 15. Zhang, Hu, Lu, Lange, Clune, "Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents", arXiv 2505.22954, 2025. https://arxiv.org/abs/2505.22954
 16. "Boffins found self-improving AI sometimes cheated", The Register, 2025-06-02. https://www.theregister.com/2025/06/02/self_improving_ai_cheat/
+17. G. K. Chesterton, *The Thing* (1929), chapter "The Drift from Domesticity": the parable known as Chesterton's fence.

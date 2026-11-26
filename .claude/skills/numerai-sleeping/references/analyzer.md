@@ -35,6 +35,8 @@ For each friction find the earliest step that made it happen, not the one where 
 
 When unsure between a skill cause and `not_skill`, ask whether a reasonable agent given only the skill text the session ran would have acted rightly. If it would have, the cause is `skill_ignored` or `not_skill`.
 
+A misconception, a wrong belief about Numerai, the data, the pipeline or ML that the agent acted on, is `skill_missing` when the skill could have stated the fact: say in `what` that it is a misconception and what the fact is. Whether it earns an edit is the lead's call: a recurring or costly one does, a single cheap slip waits on the watch list. A fact about Numerai itself goes to `numerai-update`.
+
 **Preserve**: what worked and must be kept. A rule the agent followed that paid off, a step the user approved, a script or reference that was used and did its job. Record the clearest one to three per session: they keep proposals from undoing what works.
 
 **Usage**: which skill files were read or run (the digest header lists them), parts of the skill the session never needed, what the agent kept looking up elsewhere (a candidate to move into the skill), and paths the agent took that the skill did not anticipate.
