@@ -105,7 +105,7 @@ COLUMNS = {
 class OutputFormat(str, enum.Enum):
     JSON = 'json'
     CSV = 'csv'
-    TABLE = 'table'
+    TABLE = 'table'  # noqa: V107
 
 
 def _query_with_retries(

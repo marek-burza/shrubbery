@@ -390,7 +390,7 @@ def _sample() -> dict[str, pd.Series]:
     }
 
 
-def test_historical_var(_sample: dict[str, pd.Series]) -> None:
+def test_historical_var(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # QuantStats does not expose historical VaR directly; equivalent is the
     # empirical quantile of losses.
     ours = historical_var(_sample['simple_asset'], VAR_CONFIDENCE)
@@ -398,7 +398,7 @@ def test_historical_var(_sample: dict[str, pd.Series]) -> None:
     assert abs(ours - qs_var) < _ATOL
 
 
-def test_parametric_var(_sample: dict[str, pd.Series]) -> None:
+def test_parametric_var(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # qs.stats.value_at_risk returns the return at the cutoff (negative = loss),
     # while our parametric_var returns a positive loss fraction, so we negate.
     ours = parametric_var(_sample['simple_asset'], VAR_CONFIDENCE)
@@ -408,7 +408,7 @@ def test_parametric_var(_sample: dict[str, pd.Series]) -> None:
     assert abs(ours - qs_var) < _ATOL
 
 
-def test_beta(_sample: dict[str, pd.Series]) -> None:
+def test_beta(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # qs.stats.greeks returns alpha and beta; uses simple returns internally.
     reg = regression_stats(_sample['log_asset'], _sample['log_market'])
     qs_beta = qs.stats.greeks(
@@ -417,7 +417,7 @@ def test_beta(_sample: dict[str, pd.Series]) -> None:
     assert abs(reg['beta'] - qs_beta) < _ATOL
 
 
-def test_annualised_volatility(_sample: dict[str, pd.Series]) -> None:
+def test_annualised_volatility(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # qs.stats.volatility annualises using sqrt(252) on simple returns.
     ours = _sample['log_asset'].std(ddof=1) * np.sqrt(PERIODS_PER_YEAR)
     qs_vol = qs.stats.volatility(
@@ -426,7 +426,7 @@ def test_annualised_volatility(_sample: dict[str, pd.Series]) -> None:
     assert abs(ours - qs_vol) < _ATOL
 
 
-def test_risk_decomposition_identity(_sample: dict[str, pd.Series]) -> None:
+def test_risk_decomposition_identity(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # Mathematical identity: systematic + idiosyncratic must equal total variance.
     # Independent of any external package.
     reg = regression_stats(_sample['log_asset'], _sample['log_market'])
@@ -434,14 +434,14 @@ def test_risk_decomposition_identity(_sample: dict[str, pd.Series]) -> None:
     assert abs(dec['variance_total'] - dec['reconstructed_total']) < _EPS
 
 
-def test_log_returns(_sample: dict[str, pd.Series]) -> None:
+def test_log_returns(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # skfolio's log returns must equal log(P_t / P_{t-1}).
     prices = _make_prices()
     expected = (prices / prices.shift(1)).transform(np.log).dropna()
     pd.testing.assert_frame_equal(prices_to_log_returns(prices), expected)
 
 
-def test_parametric_var_formula(_sample: dict[str, pd.Series]) -> None:
+def test_parametric_var_formula(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # QuantStats' parametric VaR must equal -(mu - z*sigma).
     returns = _sample['log_asset']
     z = stats.norm.ppf(VAR_CONFIDENCE)
@@ -449,7 +449,7 @@ def test_parametric_var_formula(_sample: dict[str, pd.Series]) -> None:
     assert abs(parametric_var(returns, VAR_CONFIDENCE) - expected) < _EPS
 
 
-def test_portfolio_variance(_sample: dict[str, pd.Series]) -> None:
+def test_portfolio_variance(_sample: dict[str, pd.Series]) -> None:  # noqa: V103
     # skfolio's annualised portfolio variance must equal w' * Sigma * w.
     returns = prices_to_log_returns(_make_prices())
     weights = np.array([0.6, 0.4])

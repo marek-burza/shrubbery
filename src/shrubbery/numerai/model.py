@@ -37,7 +37,7 @@ class NumeraiModel:
     def fit(
         self,
         features_and_targets: pd.DataFrame,
-        benchmark_models: pd.DataFrame,
+        benchmark_models: pd.DataFrame,  # noqa: V107
     ) -> Self:
         feature_names = [
             name for name in self.feature_names if name != 'feature_country'
@@ -51,7 +51,7 @@ class NumeraiModel:
     def predict(
         self,
         features: pd.DataFrame,
-        benchmark_models: pd.DataFrame,
+        benchmark_models: pd.DataFrame,  # noqa: V107
     ) -> pd.DataFrame:
         feature_names = [
             name for name in self.feature_names if name != 'feature_country'

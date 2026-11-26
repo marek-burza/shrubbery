@@ -200,10 +200,10 @@ class Status(enum.StrEnum):
 
 
 class AuthorityKind(enum.StrEnum):
-    ISO = 'iso'
-    REGISTRY = 'registry'
-    PROTOCOL = 'protocol'
-    VENDOR = 'vendor'
+    ISO = 'iso'  # noqa: V107
+    REGISTRY = 'registry'  # noqa: V107
+    PROTOCOL = 'protocol'  # noqa: V107
+    VENDOR = 'vendor'  # noqa: V107
 
 
 app = typer.Typer(
@@ -594,7 +594,7 @@ def normalise(text: str) -> str:
 def connect() -> sqlite3.Connection:
     DB.parent.mkdir(exist_ok=True)
     con = sqlite3.connect(DB)
-    con.row_factory = lambda cursor, row: {
+    con.row_factory = lambda cursor, row: {  # noqa: V101
         column[0]: value for column, value in zip(cursor.description, row)
     }
     con.create_function('normalise', 1, normalise, deterministic=True)

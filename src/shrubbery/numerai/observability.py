@@ -21,12 +21,12 @@ class LoggerWriter(io.TextIOBase):
             self.logger.log(self.level, line)
         return len(s)
 
-    def flush(self) -> None:
+    def flush(self) -> None:  # noqa: V105
         if self._buffer:
             self.logger.log(self.level, self._buffer)
             self._buffer = ''
 
-    def writable(self) -> bool:
+    def writable(self) -> bool:  # noqa: V105
         return True
 
 

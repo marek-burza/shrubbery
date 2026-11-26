@@ -84,7 +84,7 @@ def test_submit_dispatches_on_diagnose_mode(
     monkeypatch.setattr(
         main, 'numerai_models', lambda: ['example20261008111501']
     )
-    monkeypatch.setattr(main, 'submit_tournament_predictions', lambda *a: None)
+    monkeypatch.setattr(main, 'submit_tournament_predictions', lambda *_: None)
     diagnosed = []
     monkeypatch.setattr(
         main,
