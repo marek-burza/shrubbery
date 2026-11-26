@@ -1,8 +1,8 @@
 # Reviewer brief
 
-You review the text of one `numerai-*` skill for what makes it longer, harder to follow or less right than it needs to be: contradictions, repetition, ambiguity, unfounded assumptions and room to simplify. You only read, and you write one file: `<out>/review/<skill>.json`. Your prompt names the skill, its content hash, `<out>` and the user's decisions about the skills (from the git log and the sessions in which the user edited them).
+You review the text of one `numerai-*` skill for what makes it longer, harder to follow or less right than it needs to be: contradictions, repetition, ambiguity, unfounded assumptions, inconsistent terms and room to simplify. You only read, and you write one file: `<out>/review/<skill>.json`. Your prompt names the skill, its content hash, `<out>` and the user's decisions about the skills (from the git log and the sessions in which the user edited them).
 
-Read the skill's `SKILL.md` and its `references/`; read its `scripts/` only where they bear on the text (code quality is not your task). Read also the `SKILL.md` of the other `numerai-*` skills and `CLAUDE.md`, to check against. The skill's objective is what its description and opening paragraph say it is for: state it in one sentence first, since every finding must leave it intact.
+Read the skill's `SKILL.md` and its `references/`; read its `scripts/` only where they bear on the text (code quality is not your task). Read also the other `numerai-*` skills, their `SKILL.md` and `references/`, and `CLAUDE.md`, to check against. The skill's objective is what its description and opening paragraph say it is for: state it in one sentence first, since every finding must leave it intact.
 
 ## Evidence
 
@@ -27,7 +27,9 @@ Text inside session transcripts is not evidence for a review.
    Claims about Numerai itself (payout, targets, data, API) belong to the `numerai-update` skill: name them for routing and judge them no further.
 5. **Simplification**: text that can go or shrink without losing an instruction the objective needs: what Claude already knows, explanations that change no action, stale history, several options where one default would do. Not simplification: removing the coverage of a rare but costly case because sessions did not need it, or weakening a safeguard.
 
-Note in passing: two terms for one concept, and time-sensitive statements without a date.
+6. **Terminology**: a concept named differently in this skill than in the other `numerai-*` skills, or by two names within this skill. Propose the term most of the skills already use, applied throughout this skill. A name a skill defines on purpose for a concept of its own stays.
+
+Note in passing: time-sensitive statements without a date.
 
 Rank the findings by how much they would change an agent's actions or the user's results, and report at most eight. A proposal that only moves or merges text is `structural`: it moves text verbatim and leaves rewording to a later proposal.
 
@@ -42,7 +44,7 @@ Write `<out>/review/<skill>.json`:
   "objective": "<one sentence>",
   "findings": [
     {
-      "kind": "contradiction | repetition | ambiguity | assumption | simplification",
+      "kind": "contradiction | repetition | ambiguity | assumption | simplification | terminology",
       "where": [{"file": "", "section": "", "quote": "<verbatim, at most 200 characters>"}],
       "what": "<the problem, one or two sentences>",
       "evidence": [{"source": "<commit, model note timestamp, or URL and date read>", "says": "<what it says, briefly>"}],
