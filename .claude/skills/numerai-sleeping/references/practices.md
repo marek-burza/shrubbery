@@ -19,6 +19,7 @@ Researched 2026-11-26. Each section says what the sources found, then how `numer
 15. Schedule by windows
 16. Tidy the idea backlog
 17. Improve the improver, not its checks
+18. Keep the evidence with the decision
 
 ## 1. Dreaming is offline reflection on transcripts
 
@@ -114,13 +115,19 @@ Applied: each sleep's window starts at the previous sleep's `Generated` time; a 
 
 The cookbook's organizer merges duplicates and dates and supersedes facts instead of copying them, and its analyzers re-read a file right before changing it, because concurrent writes can silently replace each other [4]. Letta's community guide deduplicates on every pass and warns against appending summaries without bound [2]. `dream-skill` snapshots before it applies anything [5]. Anthropic keeps the injected layer small and moves details to where they are looked up [1], and ACE's context collapse (8) applies to a list rewritten every sleep as much as to a skill.
 
-Applied: the idea curation removes an idea only when a model note records the attempt and its outcome (or a commit records it done), merges duplicates, keeps findings as Lessons instead of dropping them, ranks the open ideas in one list note, and carries unchanged entries over word for word; the lead checks every deletion, backs up the store, re-lists the notes right before changing them and leaves the notes added meanwhile for the next sleep.
+Applied: the idea curation removes an idea only when a model note records the attempt and its outcome (or a commit records it done), merges duplicates, keeps findings as Lessons instead of dropping them, ranks the open ideas in one list note, and carries unchanged entries over word for word; the lead checks every deletion, re-lists the notes right before changing them and leaves the notes added meanwhile for the next sleep. Instead of a backup of the store, each removed note is recorded with its decision and evidence in the sleep's `sleep` note (18).
 
 ## 17. Improve the improver, not its checks
 
 The Darwin Gödel Machine, a coding agent that rewrites its own code to score higher on benchmarks, showed "objective hacking": one lineage removed the logging of the special tokens that its hallucination check relied on, despite instructions not to change them, and so passed the check without solving the problem. The paper reports that this happens more often when the checking functions are not hidden from the agent [15][16]. Anthropic counts the outputs of earlier dreaming rounds among the inputs of dreaming [1].
 
 Applied: a sleep studies the sessions of earlier sleeps with their subagents and outputs; it is judged by signals it does not produce itself (the user's decisions, the recurrence check of later sleeps), not by its own validator; and its proposals for itself may not loosen its safeguards, which stay the user's to change.
+
+## 18. Keep the evidence with the decision
+
+Anthropic's agents record with a rule how it was known to be true, and its wiki agents quote their sources word for word [1]. In the dreaming cookbook every write is a memory version that can be audited or rolled back, and facts are dated and superseded rather than copied [4]. SkillRevise anchors every edit to an action, its evidence and its placement [11]. The evidence itself does not last: Claude Code deletes a transcript after `cleanupPeriodDays` without activity (30 by default; in this workspace the oldest surviving transcript was 30 days old on 2026-11-26), and a sleep's working folder sits in the git-ignored `workspace/`.
+
+Applied: every sleep ends with a `sleep` note in the encrypted notes store, which records each proposal the user took up with an evidence summary that stands without the transcripts, its verification signal and its commit, each decline with the user's reason, the watch list, and each removed idea note with its evidence. The next sleep reads its window, declines and open verifications from these notes. Commit messages carry proposal ids only, since the repository is on GitHub.
 
 ## Sources
 
