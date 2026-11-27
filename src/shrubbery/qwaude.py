@@ -272,7 +272,9 @@ class Sweep(str, Enum):
 
 
 def root() -> Path:
-    return Path(os.environ.get('LLM_ROOT', Path.home() / 'llm')).expanduser()
+    path = Path(os.environ.get('LLM_ROOT', Path.home() / 'llm')).expanduser()
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def preset_or_die(name: str) -> Preset:
@@ -284,13 +286,14 @@ def preset_or_die(name: str) -> Preset:
 
 
 def snapshot_dir(p: Preset) -> Optional[Path]:
-    from huggingface_hub import snapshot_download
-    from huggingface_hub.errors import LocalEntryNotFoundError
+    from huggingface_hub.constants import HF_HUB_CACHE
 
-    try:
-        return Path(snapshot_download(p.repo, local_files_only=True))
-    except LocalEntryNotFoundError:
+    repo = Path(HF_HUB_CACHE) / f'models--{p.repo.replace("/", "--")}'
+    ref = repo / 'refs' / 'main'
+    if not ref.is_file():
         return None
+    snapshot = repo / 'snapshots' / ref.read_text().strip()
+    return snapshot if snapshot.is_dir() else None
 
 
 def shards(p: Preset, quant: str) -> list[Path]:
