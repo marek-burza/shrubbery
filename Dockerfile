@@ -16,6 +16,7 @@ RUN apt-get -yq update && \
         fzf \
         git \
         git-lfs \
+        graphviz \
         libasound2-plugins \
         libnvidia-compute-595-server \
         ncurses-bin \
@@ -32,6 +33,7 @@ RUN apt-get -yq update && \
 # fzf - N/A
 # git - N/A
 # git-lfs - N/A
+# graphviz - render .dot files to images (dot -Tpng)
 # libasound2-plugins - Claude Code voice (ALSA to PulseAudio routing)
 # libnvidia-compute-595-server - lightgbm
 # ncurses-bin - Claude Code
