@@ -41,6 +41,7 @@ HOST = '127.0.0.1'
 PORT = 8080
 UBATCH = 1024
 PROMPT, GENERATE = 2048, 128
+OUTPUT_TOKENS = 16384
 FIT_TARGET_MIB = 1536
 VRAM_OVERHEAD = 2 * GiB
 
@@ -933,8 +934,9 @@ def ensure_opencode_config(model: str, base_url: str) -> None:
             'tool_call': True,
             'attachment': True,
             'reasoning': True,
+            'limit': {'context': p.ctx, 'output': OUTPUT_TOKENS},
         }
-        for name in PRESETS
+        for name, p in PRESETS.items()
     }
     config = {
         '$schema': 'https://opencode.ai/config.json',
