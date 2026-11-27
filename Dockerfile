@@ -64,8 +64,6 @@ ENV TERM=xterm-256color
 # Route ALSA default device through PulseAudio (Claude Code voice mode)
 RUN /bin/bash -c "echo -e 'pcm.!default pulse\nctl.!default pulse' > $HOME/.asoundrc"
 
-RUN (curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | /bin/bash) && \
-    (curl --proto '=https' --tlsv1.2 -fsSL https://opencode.ai/install | /bin/bash)
 ARG LLAMA_RELEASE=prism-b12232-f702476
 ARG LLAMA_CUDA=13.3
 ARG LLAMA_SHA256=69db0170344c7d57e0f60c1431bc6c36abd43ae81e032be013787b5e450ad472
@@ -84,4 +82,6 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
 COPY --chown=$USER:$USER . /app/shrubbery
 RUN /bin/uv pip install --python $VIRTUAL_ENV --no-deps /app/shrubbery && \
     rm -rf /app/shrubbery
+RUN (curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | /bin/bash) && \
+    (curl --proto '=https' --tlsv1.2 -fsSL https://opencode.ai/install | /bin/bash)
 ENTRYPOINT ["/bin/bash"]
