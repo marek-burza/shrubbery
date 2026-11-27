@@ -6,18 +6,17 @@
 """Local LLM toolkit for llama.cpp — sizes everything from the hardware it finds.
 
 llm probe                  show detected GPU/VRAM/RAM/CPU and the derived settings
-llm get flash              download the best quant of a model that fits this box
-llm check flash            preflight: will it run without paging?
-llm serve flash            OpenAI-compatible server on 127.0.0.1:8080
-llm tune moe flash         llama bench sweep around an estimate from the model file
-llm code flash             all of the above, then an agent (opencode or claude) on the server
+llm get                    download the best quant of the default model (bonsai) that fits this box
+llm check                  preflight: will it run without paging?
+llm serve                  OpenAI-compatible server on 127.0.0.1:8080
+llm tune threads           llama bench sweep of threads or micro-batch size (--fit places layers)
+llm code                   probe, get, check and serve, then an agent (opencode or claude) on the server
 """
 
 from __future__ import annotations
 
 import functools
 import json
-import math
 import os
 import re
 import resource
@@ -42,6 +41,8 @@ HOST = '127.0.0.1'
 PORT = 8080
 UBATCH = 1024
 PROMPT, GENERATE = 2048, 128
+FIT_TARGET_MIB = 1536
+VRAM_OVERHEAD = 2 * GiB
 
 
 # =========================================================================== hardware probe
@@ -51,29 +52,20 @@ PROMPT, GENERATE = 2048, 128
 class Gpu:
     name: str
     vram_total: int
-    vram_used: int
-    compute_cap: str  # e.g. "8.6"
-    display_active: bool
+    vram_free: int
 
 
 @dataclass(frozen=True)
 class Hardware:
     gpus: tuple[Gpu, ...]
-    cpu_model: str
-    physical_cores: int
-    logical_cores: int
     ram_total: int
     ram_available: int
     swap_total: int
     memlock_unlimited: bool
 
     @property
-    def vram_total(self) -> int:
-        return sum(g.vram_total for g in self.gpus)
-
-    @property
     def vram_free(self) -> int:
-        return sum(g.vram_total - g.vram_used for g in self.gpus)
+        return sum(g.vram_free for g in self.gpus)
 
 
 def _meminfo() -> dict[str, int]:
@@ -87,76 +79,35 @@ def _meminfo() -> dict[str, int]:
     return out
 
 
+DEVICE_LINE = re.compile(r'^\s*\S+: (.+) \((\d+) MiB, (\d+) MiB free\)$')
+
+
 def _gpus() -> tuple[Gpu, ...]:
-    if not shutil.which('nvidia-smi'):
+    llama = shutil.which('llama')
+    if llama is None:
         return ()
-    fields = 'name,memory.total,memory.used,compute_cap,display_active'
     try:
         out = subprocess.run(
-            [
-                'nvidia-smi',
-                f'--query-gpu={fields}',
-                '--format=csv,noheader,nounits',
-            ],
+            [llama, 'serve', '--list-devices'],
             capture_output=True,
             text=True,
             check=True,
-            timeout=15,
+            timeout=60,
         ).stdout
     except (subprocess.SubprocessError, OSError):
         return ()
-    gpus = []
-    for row in out.strip().splitlines():
-        name, total, used, cap, disp = (c.strip() for c in row.split(','))
-        gpus.append(
-            Gpu(
-                name,
-                int(total) * MiB,
-                int(used) * MiB,
-                cap,
-                disp.lower() == 'enabled',
-            )
-        )
-    return tuple(gpus)
-
-
-def _cpu() -> tuple[str, int, int]:
-    model = 'unknown'
-    try:
-        for line in Path('/proc/cpuinfo').read_text().splitlines():
-            if line.startswith('model name'):
-                model = line.split(':', 1)[1].strip()
-                break
-    except OSError:
-        pass
-    online = (
-        os.sched_getaffinity(0)
-        if hasattr(os, 'sched_getaffinity')
-        else set(range(os.cpu_count() or 1))
+    matches = (DEVICE_LINE.match(line) for line in out.splitlines())
+    return tuple(
+        Gpu(m[1], int(m[2]) * MiB, int(m[3]) * MiB) for m in matches if m
     )
-    cores: set[str] = set()
-    for cpu in online:  # one entry per physical core: its SMT sibling list
-        p = Path(
-            f'/sys/devices/system/cpu/cpu{cpu}/topology/thread_siblings_list'
-        )
-        try:
-            cores.add(p.read_text().strip())
-        except OSError:
-            pass
-    logical = len(online)
-    return model, len(cores) or max(1, logical // 2), logical
 
 
 @functools.lru_cache(maxsize=1)
 def probe_hw() -> Hardware:
     mem = _meminfo()
-    model, phys, logical = _cpu()
     soft, _ = resource.getrlimit(resource.RLIMIT_MEMLOCK)
     return Hardware(
         gpus=_gpus(),
-        cpu_model=model,
-        physical_cores=phys,
-        logical_cores=logical,
         ram_total=mem.get('MemTotal', 0),
         ram_available=mem.get('MemAvailable', 0),
         swap_total=mem.get('SwapTotal', 0),
@@ -169,15 +120,10 @@ def probe_hw() -> Hardware:
 
 @dataclass(frozen=True)
 class Plan:
-    """Every constant the old scripts hard-coded, derived from Hardware."""
-
-    threads: int  # decode: memory-bound, physical cores win
-    threads_batch: int  # prefill: compute-bound, use every logical core
-    fit_target_mib: int  # VRAM --fit leaves free
-    ram_reserve: int  # OS + desktop + page cache we refuse to touch
-    kv_reserve: int  # KV cache + llama.cpp host buffers
-    vram_reserve: int  # CUDA context + compute buffers + fit margin
-    budget: int  # bytes of weights that can stay resident
+    ram_reserve: int
+    kv_reserve: int
+    vram_reserve: int
+    budget: int
 
     @property
     def vram_for_weights(self) -> int:
@@ -187,25 +133,13 @@ class Plan:
 @functools.lru_cache(maxsize=1)
 def plan() -> Plan:
     hw = probe_hw()
-    # A GPU that drives a display has VRAM use that fluctuates (browser, compositor).
-    fit_target = 1536 if any(g.display_active for g in hw.gpus) else 1024
     ram_reserve = max(6 * GiB, int(0.08 * hw.ram_total))
     kv_reserve = 4 * GiB
-    vram_reserve = (
-        (fit_target * MiB + 2 * GiB) * max(1, len(hw.gpus)) if hw.gpus else 0
-    )
+    vram_reserve = (FIT_TARGET_MIB * MiB + VRAM_OVERHEAD) * len(hw.gpus)
     budget = (hw.ram_total - ram_reserve - kv_reserve) + max(
         0, hw.vram_free - vram_reserve
     )
-    return Plan(
-        threads=hw.physical_cores,
-        threads_batch=hw.logical_cores,
-        fit_target_mib=fit_target,
-        ram_reserve=ram_reserve,
-        kv_reserve=kv_reserve,
-        vram_reserve=vram_reserve,
-        budget=max(0, budget),
-    )
+    return Plan(ram_reserve, kv_reserve, vram_reserve, max(0, budget))
 
 
 # =========================================================================== model presets
@@ -219,21 +153,60 @@ class Quant:
 
 
 @dataclass(frozen=True)
+class Draft:
+    path: str
+    size_gb: float
+
+
+@dataclass(frozen=True)
 class Preset:
     repo: str
-    family: str  # "qwen" | "glm" — sampling defaults
+    family: str  # "qwen" | "bonsai" | "mimo": sampling defaults
     note: str
     quants: tuple[
         Quant, ...
     ]  # in order of preference: best quality-per-byte first
     ctx: int = 65536
+    spec: tuple[str, ...] = ()
+    draft: Optional[Draft] = None
+    dense: bool = False
+    kv_per_token: int = 0
+    kv_cache: str = 'f16'
 
     @property
     def dir_name(self) -> str:
         return self.repo.split('/')[-1]
 
 
+def mtp(n_max: int) -> tuple[str, ...]:
+    return (
+        '--spec-type',
+        'draft-mtp',
+        '--spec-draft-n-min',
+        '0',
+        '--spec-draft-n-max',
+        str(n_max),
+        '--spec-draft-p-min',
+        '0',
+    )
+
+
+QWEN35_KV_PER_TOKEN = 64 * 1024
+KV_CACHE_SCALE = {'f16': 1.0, 'q8_0': 34 / 64}
+
+DEFAULT_MODEL = 'bonsai'
+
 PRESETS: dict[str, Preset] = {
+    'bonsai': Preset(
+        repo='prism-ml/Ternary-Bonsai-2.5-27B-GGUF',
+        family='bonsai',
+        note='Ternary Bonsai 2.5 27B (Qwen3.8-27B at 1.76 bpw) + MTP draft head: agentic default',
+        quants=(Quant('PTQ1_0-mtp', 6.23, 'ternary, PrismML fork'),),
+        ctx=131072,
+        spec=mtp(3),
+        dense=True,
+        kv_per_token=QWEN35_KV_PER_TOKEN,
+    ),
     'flash': Preset(
         repo='unsloth/Qwen3.8-Flash-Next-GGUF',
         family='qwen',
@@ -250,30 +223,34 @@ PRESETS: dict[str, Preset] = {
     '27b': Preset(
         repo='unsloth/Qwen3.8-27B-GGUF',
         family='qwen',
-        note='Qwen3.8-27B dense — fast, near-lossless coder',
-        # BF16 ranks after Q8_0: no measurable quality gain for ~2x the bytes per token
+        note='Qwen3.8-27B dense + MTP draft: fast coder, sized to fit VRAM',
         quants=(
             Quant('Q8_0', 29.0, 'near-lossless'),
-            Quant('BF16', 54.7, 'unquantized'),
-            Quant('Q4_K_M', 17.1, 'fits a 24 GB card alone'),
+            Quant('UD-Q6_K_XL', 25.3, '6-bit'),
+            Quant('UD-Q5_K_XL', 21.0, '5-bit'),
+            Quant('UD-Q4_K_XL', 17.7, '4-bit'),
+            Quant('UD-IQ4_XS', 14.4, '4-bit, smaller'),
+            Quant('UD-Q3_K_XL', 13.1, '3-bit'),
         ),
+        spec=mtp(2),
+        draft=Draft('MTP/mtp-Qwen3.8-27B-Q4_0.gguf', 1.37),
+        dense=True,
+        kv_per_token=QWEN35_KV_PER_TOKEN,
+        kv_cache='q8_0',
     ),
-    'glm': Preset(
-        repo='unsloth/GLM-5.3-Flash-GGUF',
-        family='glm',
-        note='GLM-5.3-Flash 320B-A18B — second opinion, heavy quant',
-        quants=(
-            Quant('UD-Q3_K_XL', 147.5, '86.3% top-1'),
-            Quant('UD-IQ3_XXS', 120.4, '81.6% top-1'),
-            Quant('UD-Q2_K_XL', 108.7, '78.3% top-1'),
-            Quant('UD-IQ2_XXS', 101.8, '76.3% top-1'),
-            Quant('UD-IQ1_M', 97.6, '73.1% top-1'),
-        ),
+    'mimo': Preset(
+        repo='TrevorJS/MiMo-V2.6-Flash-RL-GGUF',
+        family='mimo',
+        note='MiMo-V2.6-Flash 309B-A15B: strongest coding agent that fits, 2.55 bpw',
+        quants=(Quant('IQ2_XS_M-v2.1', 98.7, 'GSM8K 95.6 vs 96.4 FP8'),),
     ),
 }
 
-QWEN_EFFORTS = {'low', 'medium', 'xhigh'}
-GLM_EFFORTS = {'low', 'high', 'max'}
+EFFORTS = {
+    'qwen': {'low', 'medium', 'xhigh'},
+    'bonsai': {'medium', 'xhigh'},
+    'mimo': set(),
+}
 
 
 class Mode(str, Enum):
@@ -287,8 +264,6 @@ class Agent(str, Enum):
 
 
 class Sweep(str, Enum):
-    moe = 'moe'
-    ngl = 'ngl'
     threads = 'threads'
     ubatch = 'ubatch'
 
@@ -308,9 +283,19 @@ def preset_or_die(name: str) -> Preset:
     return PRESETS[name]
 
 
+def snapshot_dir(p: Preset) -> Optional[Path]:
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.errors import LocalEntryNotFoundError
+
+    try:
+        return Path(snapshot_download(p.repo, local_files_only=True))
+    except LocalEntryNotFoundError:
+        return None
+
+
 def shards(p: Preset, quant: str) -> list[Path]:
-    base = root() / 'models' / p.dir_name
-    if not base.exists():
+    base = snapshot_dir(p)
+    if base is None:
         return []
     # match the quant as a whole token so "Q4_K_XL" doesn't also match "UD-Q4_K_XL"
     rx = re.compile(rf'(^|[-_.]){re.escape(quant)}([-_.]|$)')
@@ -322,19 +307,45 @@ def shards(p: Preset, quant: str) -> list[Path]:
 
 
 def quant_size(p: Preset, q: Quant) -> int:
-    files = shards(p, q.name)
-    return (
-        sum(f.stat().st_size for f in files) if files else int(q.size_gb * GB)
-    )
+    if not is_downloaded(p, q):
+        return int(q.size_gb * GB)
+    return sum(f.stat().st_size for f in shards(p, q.name))
+
+
+SHARD_OF = re.compile(r'-\d{5}-of-(\d{5})$')
 
 
 def is_downloaded(p: Preset, q: Quant) -> bool:
-    return bool(shards(p, q.name))
+    files = shards(p, q.name)
+    split = SHARD_OF.search(files[0].stem) if files else None
+    return bool(files) and (split is None or len(files) == int(split[1]))
+
+
+def draft_bytes(p: Preset) -> int:
+    return int(p.draft.size_gb * GB) if p.draft else 0
+
+
+def vram_budget(p: Preset) -> int:
+    kv = int(p.ctx * p.kv_per_token * KV_CACHE_SCALE[p.kv_cache])
+    return plan().vram_for_weights - kv - draft_bytes(p)
+
+
+def candidates(p: Preset, pool: list[Quant]) -> list[tuple[int, list[Quant]]]:
+    resident = (plan().budget, pool)
+    if not (p.dense and probe_hw().gpus):
+        return [resident]
+    least_spill = sorted(pool, key=lambda q: quant_size(p, q))
+    return [(vram_budget(p), pool), (plan().budget, least_spill)]
+
+
+def fit_label(p: Preset, size: int) -> str:
+    if p.dense and probe_hw().gpus and size <= vram_budget(p):
+        return 'vram'
+    return 'fits' if size <= plan().budget else 'pages'
 
 
 def pick_quant(p: Preset, downloaded_only: bool) -> tuple[Quant, bool]:
-    """Best-preference quant that stays resident; returns (quant, fits)."""
-    budget = plan().budget
+    """Best quant that fits VRAM (dense) or stays resident (MoE); a dense model that fits nowhere spills least."""
     pool = (
         [q for q in p.quants if is_downloaded(p, q)]
         if downloaded_only
@@ -342,9 +353,10 @@ def pick_quant(p: Preset, downloaded_only: bool) -> tuple[Quant, bool]:
     )
     if not pool:
         raise LookupError
-    for q in pool:
-        if quant_size(p, q) <= budget:
-            return q, True
+    for budget, quants in candidates(p, pool):
+        for q in quants:
+            if quant_size(p, q) <= budget:
+                return q, True
     return min(pool, key=lambda q: quant_size(p, q)), False
 
 
@@ -383,7 +395,7 @@ def first_shard(p: Preset, q: Quant) -> Path:
     files = shards(p, q.name)
     if not files:
         typer.secho(
-            f'No {q.name} GGUF under {root() / "models" / p.dir_name} — run: '
+            f'No {q.name} GGUF of {p.repo} in the Hugging Face cache, run: '
             f'llm get <model> --quant {q.name}',
             fg='red',
             err=True,
@@ -392,11 +404,19 @@ def first_shard(p: Preset, q: Quant) -> Path:
     return files[0]
 
 
+def draft_args(p: Preset) -> list[str]:
+    if p.draft is None:
+        return list(p.spec)
+    base = snapshot_dir(p)
+    path = base / p.draft.path if base else Path(p.draft.path)
+    return ['-md', str(path), *p.spec]
+
+
 def need_llama(command: str, dry_run: bool = False) -> list[str]:
     b = shutil.which('llama')
     if b is None and not dry_run:
         typer.secho(
-            'Missing llama on PATH: the Dockerfile installs it from llama.app',
+            'Missing llama on PATH: the Dockerfile installs the PrismML llama.cpp fork',
             fg='red',
             err=True,
         )
@@ -454,26 +474,6 @@ def gguf_meta(path: Path) -> dict[str, str | int | float | bool]:
     return out
 
 
-@dataclass(frozen=True)
-class ModelShape:
-    arch: str
-    layers: int
-    experts: int  # 0 for dense
-    size: int
-
-
-def model_shape(p: Preset, q: Quant) -> ModelShape:
-    gguf = first_shard(p, q)
-    meta = gguf_meta(gguf)
-    arch = str(meta.get('general.architecture', '?'))
-    return ModelShape(
-        arch=arch,
-        layers=int(meta.get(f'{arch}.block_count', 0)),
-        experts=int(meta.get(f'{arch}.expert_count', 0)),
-        size=quant_size(p, q),
-    )
-
-
 # =========================================================================== commands
 
 
@@ -484,17 +484,13 @@ def probe() -> None:
     typer.secho('hardware', bold=True)
     for i, g in enumerate(hw.gpus):
         typer.echo(
-            f'  GPU{i}  {g.name}  {g.vram_total / GiB:.1f} GiB  (used {g.vram_used / GiB:.1f}), '
-            f'sm_{g.compute_cap.replace(".", "")}{", drives display" if g.display_active else ""}'
+            f'  GPU{i}  {g.name}  {g.vram_total / GiB:.1f} GiB  ({g.vram_free / GiB:.1f} free)'
         )
     if not hw.gpus:
         typer.secho(
-            '  no NVIDIA GPU found (nvidia-smi missing) — CPU-only plan',
+            '  no GPU listed by `llama serve --list-devices`: CPU-only plan',
             fg='yellow',
         )
-    typer.echo(
-        f'  CPU   {hw.cpu_model}: {hw.physical_cores} cores / {hw.logical_cores} threads'
-    )
     typer.echo(
         f'  RAM   {hw.ram_total / GiB:.1f} GiB (available {hw.ram_available / GiB:.1f}), '
         f'swap {hw.swap_total / GiB:.1f} GiB, memlock {"unlimited" if hw.memlock_unlimited else "LIMITED"}'
@@ -502,11 +498,8 @@ def probe() -> None:
 
     typer.secho('derived', bold=True)
     typer.echo(
-        f'  threads    -t {pl.threads} (decode)  -tb {pl.threads_batch} (prefill)'
-    )
-    typer.echo(
-        f'  VRAM       --fit-target {pl.fit_target_mib} MiB; {pl.vram_reserve / GiB:.1f} GiB '
-        f'reserved → {pl.vram_for_weights / GiB:.1f} GiB for weights'
+        f'  VRAM       --fit-target {FIT_TARGET_MIB} MiB; {pl.vram_reserve / GiB:.1f} GiB '
+        f'reserved → {pl.vram_for_weights / GiB:.1f} GiB for weights, KV and draft'
     )
     typer.echo(
         f'  RAM        {pl.ram_reserve / GiB:.1f} GiB OS reserve + {pl.kv_reserve / GiB:.0f} GiB '
@@ -539,10 +532,9 @@ def list_models() -> None:
         typer.secho(f'{name:6} {p.note}', bold=True)
         for q in p.quants:
             size = quant_size(p, q)
-            fit = (
-                typer.style('fits', fg='green')
-                if size <= budget
-                else typer.style('pages', fg='yellow')
+            label = fit_label(p, size)
+            fit = typer.style(
+                label, fg='yellow' if label == 'pages' else 'green'
             )
             have = 'downloaded' if is_downloaded(p, q) else ''
             typer.echo(
@@ -554,19 +546,19 @@ def list_models() -> None:
 def get(
     model: Annotated[
         str, typer.Argument(help=f'one of: {", ".join(PRESETS)}')
-    ],
+    ] = DEFAULT_MODEL,
     quant: Annotated[
         Optional[str],
         typer.Option(help='default: best quant that fits this machine'),
     ] = None,
 ) -> None:
-    """Download a quant from Hugging Face (resumable)."""
+    """Download a quant (and its draft model) into the Hugging Face cache (resumable)."""
     from huggingface_hub import snapshot_download
+    from huggingface_hub.constants import HF_HUB_CACHE
 
     p = preset_or_die(model)
     q = resolve_quant(p, quant, downloaded_only=False)
-    dest = root() / 'models' / p.dir_name
-    probe_dir = dest
+    probe_dir = Path(HF_HUB_CACHE)
     while not probe_dir.exists():
         probe_dir = probe_dir.parent
     free = shutil.disk_usage(probe_dir).free
@@ -577,15 +569,17 @@ def get(
             fg='red',
         )
         raise typer.Exit(1)
-    typer.echo(f'Downloading {p.repo} [{q.name}] -> {dest}')
+    typer.echo(f'Downloading {p.repo} [{q.name}] -> {HF_HUB_CACHE}')
     snapshot_download(
-        repo_id=p.repo, local_dir=dest, allow_patterns=[f'*{q.name}*']
+        repo_id=p.repo,
+        allow_patterns=[f'*[-_./]{q.name}[-_.]*']
+        + ([p.draft.path] if p.draft else []),
     )
 
 
 @app.command()
 def check(
-    model: Annotated[str, typer.Argument()],
+    model: Annotated[str, typer.Argument()] = DEFAULT_MODEL,
     quant: Annotated[Optional[str], typer.Option()] = None,
 ) -> None:
     """Preflight for no-paging runs: size vs derived budget, memlock limit, swap."""
@@ -644,7 +638,7 @@ def serve(
     ctx: typer.Context,
     model: Annotated[
         str, typer.Argument(help=f'one of: {", ".join(PRESETS)}')
-    ],
+    ] = DEFAULT_MODEL,
     quant: Annotated[
         Optional[str],
         typer.Option(help='default: best downloaded quant that fits'),
@@ -655,30 +649,15 @@ def serve(
     effort: Annotated[
         Optional[str],
         typer.Option(
-            help='reasoning effort — Qwen: low|medium|xhigh, GLM: low|high|max'
+            help='reasoning effort, Qwen: low|medium|xhigh, Bonsai: medium|xhigh, MiMo: none'
         ),
     ] = None,
     mode: Annotated[
-        Mode, typer.Option(help='Qwen sampling preset')
+        Mode, typer.Option(help='sampling preset; instruct turns thinking off')
     ] = Mode.thinking,
-    ncmoe: Annotated[
-        Optional[int],
-        typer.Option(help='pin -ngl 99 --n-cpu-moe N instead of --fit'),
-    ] = None,
-    ngl: Annotated[
-        Optional[int],
-        typer.Option(help='pin GPU layers (dense models) instead of --fit'),
-    ] = None,
     fit_target: Annotated[
-        Optional[int],
-        typer.Option(help='MiB of VRAM --fit leaves free [derived]'),
-    ] = None,
-    threads: Annotated[
-        Optional[int], typer.Option(help='decode threads [physical cores]')
-    ] = None,
-    threads_batch: Annotated[
-        Optional[int], typer.Option(help='prefill threads [logical cores]')
-    ] = None,
+        int, typer.Option(help='MiB of VRAM --fit leaves free')
+    ] = FIT_TARGET_MIB,
     ubatch: Annotated[
         int, typer.Option(help='batch / micro-batch size')
     ] = UBATCH,
@@ -702,11 +681,7 @@ def serve(
         ctx_size,
         effort,
         mode,
-        ncmoe,
-        ngl,
         fit_target,
-        threads,
-        threads_batch,
         ubatch,
         host,
         port,
@@ -725,11 +700,7 @@ def server_command(
     ctx_size: Optional[int] = None,
     effort: Optional[str] = None,
     mode: Mode = Mode.thinking,
-    ncmoe: Optional[int] = None,
-    ngl: Optional[int] = None,
-    fit_target: Optional[int] = None,
-    threads: Optional[int] = None,
-    threads_batch: Optional[int] = None,
+    fit_target: int = FIT_TARGET_MIB,
     ubatch: int = UBATCH,
     host: str = HOST,
     port: int = PORT,
@@ -762,10 +733,6 @@ def server_command(
         str(ctx_size or p.ctx),
         '-fa',
         'on',
-        '-t',
-        str(threads or pl.threads),
-        '-tb',
-        str(threads_batch or pl.threads_batch),
         '-b',
         str(ubatch),
         '-ub',
@@ -774,23 +741,18 @@ def server_command(
         host,
         '--port',
         str(port),
+        '--fit',
+        'on',
+        '--fit-target',
+        str(fit_target),
+        '-ctk',
+        p.kv_cache,
+        '-ctv',
+        p.kv_cache,
     ]
-    if not hw.gpus:
-        args += ['-ngl', '0']
-    elif ncmoe is not None:
-        args += ['-ngl', '99', '--n-cpu-moe', str(ncmoe)]
-    elif ngl is not None:
-        args += ['-ngl', str(ngl)]
-    else:
-        args += [
-            '--fit',
-            'on',
-            '--fit-target',
-            str(fit_target or pl.fit_target_mib),
-        ]
 
     # Sampling: vendor-recommended defaults (Unsloth model docs)
-    if p.family == 'qwen':
+    if p.family in ('qwen', 'bonsai'):
         if mode is Mode.instruct:
             args += [
                 '--temp',
@@ -817,23 +779,24 @@ def server_command(
                 '0',
             ]
             template_kwargs = {'reasoning_effort': effort or 'xhigh'}
-        allowed = QWEN_EFFORTS
     else:
         args += [
             '--temp',
             '1.0',
             '--top-p',
             '0.95',
-            '--kv-unified',
-        ]  # --kv-unified: GLM multi-seq
-        template_kwargs = {'reasoning_effort': effort or 'max'}
-        allowed = GLM_EFFORTS
-    eff = template_kwargs.get('reasoning_effort')
-    if eff is not None and eff not in allowed:
+            '--top-k',
+            '0',
+            '--min-p',
+            '0',
+        ]
+        template_kwargs = {'enable_thinking': mode is Mode.thinking}
+    if effort is not None and effort not in EFFORTS[p.family]:
         raise typer.BadParameter(
-            f'effort for {model} must be one of {sorted(allowed)}'
+            f'effort for {model} must be one of {sorted(EFFORTS[p.family]) or "none"}'
         )
     args += ['--chat-template-kwargs', json.dumps(template_kwargs)]
+    args += draft_args(p)
 
     if not paging:
         args += ['-lm', 'mlock']
@@ -847,47 +810,26 @@ def server_command(
     return args + list(extra)
 
 
-def est_ncmoe(shape: ModelShape) -> int:
-    """Nearly all bytes of a sparse MoE are experts: offload the share that won't fit in VRAM."""
-    gpu_share = min(1.0, plan().vram_for_weights / max(1, shape.size))
-    return min(shape.layers, math.ceil(shape.layers * (1 - gpu_share)))
-
-
-def est_ngl(shape: ModelShape) -> int:
-    gpu_share = min(1.0, plan().vram_for_weights / max(1, shape.size))
-    return math.floor(shape.layers * gpu_share)
-
-
-def sweep_values(sweep: Sweep, shape: ModelShape) -> tuple[str, list[int]]:
-    hw, L = probe_hw(), max(1, shape.layers)
-    clamp = lambda vals: sorted({min(L, max(0, v)) for v in vals})
-    if sweep is Sweep.moe:
-        e = est_ncmoe(shape)
-        return 'n-cpu-moe', clamp([e - 2, e, e + 2, e + 4, e + 8])
-    if sweep is Sweep.ngl:
-        e = est_ngl(shape)
-        return 'ngl', clamp([e - 6, e - 4, e - 2, e, e + 2])
+def sweep_values(sweep: Sweep) -> tuple[str, list[int]]:
     if sweep is Sweep.threads:
-        p, n = hw.physical_cores, hw.logical_cores
-        return 'threads', sorted({max(1, p // 2), max(1, 3 * p // 4), p, n})
+        n = os.cpu_count() or 1
+        return 'threads', sorted({max(1, n * k // 4) for k in (1, 2, 3, 4)})
     return 'ubatch', [512, 1024, 2048, 4096]
+
+
+def sweep_args(sweep: Sweep, value: int) -> list[str]:
+    if sweep is Sweep.threads:
+        return ['-t', str(value), '-ub', str(UBATCH), '-b', str(UBATCH)]
+    return ['-ub', str(value), '-b', '4096']
 
 
 @app.command()
 def tune(
     sweep: Annotated[Sweep, typer.Argument(help='what to sweep')],
-    model: Annotated[str, typer.Argument()],
+    model: Annotated[str, typer.Argument()] = DEFAULT_MODEL,
     values: Annotated[
         Optional[str],
         typer.Option(help='override the derived sweep, e.g. 8,16,24'),
-    ] = None,
-    ncmoe: Annotated[
-        Optional[int],
-        typer.Option(help='pinned n-cpu-moe for threads/ubatch sweeps'),
-    ] = None,
-    ngl: Annotated[
-        Optional[int],
-        typer.Option(help='pinned ngl for threads/ubatch sweeps (dense)'),
     ] = None,
     quant: Annotated[Optional[str], typer.Option()] = None,
     depth: Annotated[
@@ -898,33 +840,13 @@ def tune(
     ] = None,
     dry_run: bool = False,
 ) -> Optional[int]:
-    """Sweep with llama bench around values estimated from the model file and VRAM.
+    """Sweep threads or micro-batch size with llama bench; --fit places the layers.
 
     Each value runs separately, so an out-of-memory at one value doesn't stop the sweep.
-    Then pin the winner: `llm serve flash --ncmoe N` or `llm serve 27b --ngl N`.
     """
-    pl, p = plan(), preset_or_die(model)
+    p = preset_or_die(model)
     q = resolve_quant(p, quant, downloaded_only=True)
-    shape = model_shape(p, q)
-    moe = shape.experts > 0
-    typer.secho(
-        f'{shape.arch}: {shape.layers} layers, {shape.experts or "no"} experts, '
-        f'{shape.size / GiB:.1f} GiB; {pl.vram_for_weights / GiB:.1f} GiB VRAM for weights',
-        fg='cyan',
-        err=True,
-    )
-    if sweep is Sweep.moe and not moe:
-        raise typer.BadParameter(
-            f'{model} is dense — use `llm tune ngl {model}`'
-        )
-    if sweep is Sweep.ngl and moe:
-        typer.secho(
-            '!! MoE model: `tune moe` usually beats splitting whole layers',
-            fg='yellow',
-            err=True,
-        )
-
-    label, vals = sweep_values(sweep, shape)
+    label, vals = sweep_values(sweep)
     if values:
         vals = [int(v) for v in values.split(',')]
     bench = need_llama('bench', dry_run)
@@ -936,6 +858,8 @@ def tune(
         'on',
         '-lm',
         'none',
+        '-fitt',
+        str(FIT_TARGET_MIB),
         '-p',
         str(PROMPT),
         '-n',
@@ -948,41 +872,9 @@ def tune(
         'json',
     ]
 
-    def placement(v: Optional[int] = None) -> list[str]:
-        if sweep is Sweep.moe:
-            return ['-ngl', '99', '--n-cpu-moe', str(v)]
-        if sweep is Sweep.ngl:
-            return ['-ngl', str(v)]
-        if moe:  # threads/ubatch sweeps hold placement fixed
-            return [
-                '-ngl',
-                '99',
-                '--n-cpu-moe',
-                str(ncmoe if ncmoe is not None else est_ncmoe(shape) + 2),
-            ]
-        return ['-ngl', str(ngl if ngl is not None else est_ngl(shape) - 2)]
-
     rows: list[tuple[int, dict[str, float]]] = []
     for v in vals:
-        extra = {
-            Sweep.threads: [
-                '-t',
-                str(v),
-                '-ub',
-                str(UBATCH),
-                '-b',
-                str(UBATCH),
-            ],
-            Sweep.ubatch: ['-t', str(pl.threads), '-ub', str(v), '-b', '4096'],
-        }
-        cmd = (
-            base
-            + placement(v)
-            + extra.get(
-                sweep,
-                ['-t', str(pl.threads), '-ub', str(UBATCH), '-b', str(UBATCH)],
-            )
-        )
+        cmd = base + sweep_args(sweep, v)
         if dry_run:
             typer.echo(' '.join(cmd))
             continue
@@ -1020,12 +912,7 @@ def tune(
         tg_cols[-1] if tg_cols else cols[0]
     )  # generation speed at the deepest context
     best = max(rows, key=lambda r: r[1].get(key, 0))[0]
-    flag = {
-        Sweep.moe: '--ncmoe',
-        Sweep.ngl: '--ngl',
-        Sweep.threads: '--threads',
-        Sweep.ubatch: '--ubatch',
-    }[sweep]
+    flag = {Sweep.threads: '-- -t', Sweep.ubatch: '--ubatch'}[sweep]
     typer.secho(
         f'\nbest {key}: {label}={best} → llm serve {model} {flag} {best}',
         bold=True,
@@ -1137,7 +1024,7 @@ def code(
     ctx: typer.Context,
     model: Annotated[
         str, typer.Argument(help=f'one of: {", ".join(PRESETS)}')
-    ],
+    ] = DEFAULT_MODEL,
     agent: Annotated[
         Agent, typer.Option(help='coding agent to run against the server')
     ] = Agent.opencode,
@@ -1145,25 +1032,13 @@ def code(
         Optional[str],
         typer.Option(help='default: best quant that fits this machine'),
     ] = None,
-    tune_placement: Annotated[
-        bool,
-        typer.Option(
-            '--tune/--no-tune',
-            help='llama bench the GPU placement before serving',
-        ),
-    ] = True,
 ) -> None:
-    """Probe, get, check, tune and serve a model, then run an agent on it. Extra args go to the agent."""
+    """Probe, get, check and serve a model, then run an agent on it. Extra args go to the agent."""
     probe()
     q = resolve_quant(preset_or_die(model), quant, downloaded_only=False).name
     get(model, q)
     if not preflight(model, q):
         raise typer.Exit(1)
-    ncmoe = ngl = None
-    if tune_placement and probe_hw().gpus:
-        moe = model_shape(preset_or_die(model), Quant(q, 0.0)).experts > 0
-        best = tune(Sweep.moe if moe else Sweep.ngl, model, quant=q)
-        ncmoe, ngl = (best, None) if moe else (None, best)
 
     base_url = f'http://{HOST}:{PORT}'
     log_path = root() / f'llama-server.{model}.log'
@@ -1171,9 +1046,7 @@ def code(
         first_shard(preset_or_die(model), Quant(q, 0.0)),
         root() / f'{model}.jinja',
     )
-    args = server_command(
-        model, q, ncmoe=ncmoe, ngl=ngl, extra=tuple(template)
-    )
+    args = server_command(model, q, extra=tuple(template))
     typer.secho('+ ' + ' '.join(args) + f' > {log_path}', fg='cyan', err=True)
     with (
         log_path.open('w') as log,

@@ -63,8 +63,17 @@ ENV TERM=xterm-256color
 RUN /bin/bash -c "echo -e 'pcm.!default pulse\nctl.!default pulse' > $HOME/.asoundrc"
 
 RUN (curl --proto '=https' --tlsv1.2 -fsSL https://claude.ai/install.sh | /bin/bash) && \
-    (curl --proto '=https' --tlsv1.2 -fsSL https://opencode.ai/install | /bin/bash) && \
-    (curl --proto '=https' --tlsv1.2 -fsSL https://llama.app/install.sh | /bin/sh)
+    (curl --proto '=https' --tlsv1.2 -fsSL https://opencode.ai/install | /bin/bash)
+ARG LLAMA_RELEASE=prism-b12232-f702476
+ARG LLAMA_CUDA=13.3
+ARG LLAMA_SHA256=69db0170344c7d57e0f60c1431bc6c36abd43ae81e032be013787b5e450ad472
+RUN curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/llama.tar.gz \
+        https://github.com/PrismML-Eng/llama.cpp/releases/download/$LLAMA_RELEASE/llama-$LLAMA_RELEASE-bin-linux-cuda-$LLAMA_CUDA-x64.tar.gz && \
+    echo "$LLAMA_SHA256  /tmp/llama.tar.gz" | sha256sum -c - && \
+    mkdir -p $HOME/.local/lib/llama $HOME/.local/bin && \
+    tar -xzf /tmp/llama.tar.gz -C $HOME/.local/lib/llama --strip-components=1 && \
+    ln -s $HOME/.local/lib/llama/llama $HOME/.local/bin/llama && \
+    rm /tmp/llama.tar.gz
 ENV PATH="$PATH:$VIRTUAL_ENV/bin:$HOME/.local/bin:$HOME/.opencode/bin"
 
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
