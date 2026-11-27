@@ -202,10 +202,11 @@ PRESETS: dict[str, Preset] = {
         family='bonsai',
         note='Ternary Bonsai 2.5 27B (Qwen3.8-27B at 1.76 bpw) + MTP draft head: agentic default',
         quants=(Quant('PTQ1_0-mtp', 6.23, 'ternary, PrismML fork'),),
-        ctx=131072,
+        ctx=262144,
         spec=mtp(3),
         dense=True,
         kv_per_token=QWEN35_KV_PER_TOKEN,
+        kv_cache='q8_0',
     ),
     'flash': Preset(
         repo='unsloth/Qwen3.8-Flash-Next-GGUF',
