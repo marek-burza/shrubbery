@@ -1,3 +1,5 @@
+FROM ghcr.io/astral-sh/uv:0.13.10 AS uv
+
 # Sync NVIDIA Driver & CUDA versions (`nvidia-smi`)
 FROM nvidia/cuda:13.5.0-devel-ubuntu24.04
 
@@ -38,7 +40,7 @@ RUN apt-get -yq update && \
 # npm - MCP (provides node, npx)
 # ripgrep - Claude Code
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=uv /uv /uvx /bin/
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_HTTP_TIMEOUT=60 \

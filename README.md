@@ -125,7 +125,7 @@ To run the code create `.env` script which sets the necessary environment variab
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yaml`): On every push, it runs linting, builds and pushes a Docker container image to GHCR (`ghcr.io/{owner}/shrubbery`), and prunes old images (keeps latest 10).
+GitHub Actions (`.github/workflows/ci.yaml`): On every push, it runs linting, builds and pushes a Docker container image to GHCR (`ghcr.io/{owner}/shrubbery`, reusing the layers of `:latest` as build cache), and prunes old images (keeps latest 10).
 
 ## Profiling
 

@@ -13,6 +13,7 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "latest"
+          enable-cache: false
       - name: Linting
         run: |
           /bin/sh .github/workflows/linter.sh
@@ -25,8 +26,9 @@ jobs:
           DOCKER_IMAGE='ghcr.io/${{ github.repository_owner }}/shrubbery'
           TAGS="${DOCKER_IMAGE}:latest,${DOCKER_IMAGE}:${{ github.sha }}"
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-      - name: QEMU
-        uses: docker/setup-qemu-action@v4.4.0
+      # Only necessary for multi-arch builds (platforms other than linux/amd64)
+      # - name: QEMU
+      #   uses: docker/setup-qemu-action@master
       - name: Buildx
         id: buildx
         uses: docker/setup-buildx-action@v4.4.1
@@ -43,6 +45,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/shrubbery:latest
+          cache-to: type=inline
       - name: Trash
         uses: actions/delete-package-versions@v5
         with:
