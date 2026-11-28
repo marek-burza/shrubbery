@@ -57,7 +57,7 @@ dev = [
     "pyright>=1.1.414", # Language server for the coding agent
     "pytest>=9.0.2", # Test runner
     "ruff>=0.17.6", # Linter and formatter
-    "ty>=0.0.104", # Type checker
+    "ty>=0.0.107", # Type checker
     "vulture>=2.16", # Dead code finder
     "wat>=0.7.0", # Deep inspection of Python objects
 ]
