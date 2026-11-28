@@ -1578,14 +1578,14 @@ wheels = [
 
 [[package]]
 name = "optuna-integration"
-version = "5.0.0"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "optuna" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/80/11da348a0cf62e7e4561508215e79bc44f2e7e96e15c810e373f687346b0/optuna_integration-5.0.0.tar.gz", hash = "sha256:d32d099a37c3d4c8376d10676e67f789429b4489ada70eacdeefa4350499a89e", size = 79666, upload-time = "2026-09-07T05:05:28.946Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/a0/4a7012f372a51f86d0b8f6ee8eaf489aa26f9530dcb90552b44924d0dccc/optuna_integration-5.1.0.tar.gz", hash = "sha256:e3dd238a429ffe21fa0ada61f68e8985318a5577d9c52f6853699c9020a57491", size = 79762, upload-time = "2026-11-16T05:04:10.53Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/2e/05051341d6b86652292a32f8b413d334aa337f78d58d4099f78a47ff5a60/optuna_integration-5.0.0-py3-none-any.whl", hash = "sha256:598247471d44553c98665ce96dc7d9e6534bb8b2ef38273197f76bdf916e5e2a", size = 88158, upload-time = "2026-09-07T05:05:27.663Z" },
+    { url = "https://files.pythonhosted.org/packages/64/94/0e49e7ed61a4d3a82150f281a49fc628d048f8f503307c0900c8cc8beec9/optuna_integration-5.1.0-py3-none-any.whl", hash = "sha256:33ecc2863fc3e9132ba7c3e5d86f8bbbd74211181b8abc9d5a8c4a08920c51e0", size = 88339, upload-time = "2026-11-16T05:04:09.27Z" },
 ]
 
 [[package]]
@@ -2400,7 +2400,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "nvidia-modelopt", specifier = ">=0.48.0" },
     { name = "optuna", specifier = ">=5.0.0" },
-    { name = "optuna-integration", specifier = ">=5.0.0" },
+    { name = "optuna-integration", specifier = ">=5.1.0" },
     { name = "pandas", specifier = ">=3.1.1" },
     { name = "pdbpp", marker = "extra == 'dev'", specifier = ">=0.12.1" },
     { name = "psutil", specifier = ">=7.2.2" },
