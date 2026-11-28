@@ -2415,7 +2415,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "skfolio", specifier = ">=1.12.12" },
-    { name = "sklearn-genetic-opt", specifier = ">=0.14.0" },
+    { name = "sklearn-genetic-opt", specifier = ">=0.15.0" },
     { name = "tabulate", specifier = ">=0.10.0" },
     { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cu132" },
     { name = "tqdm", specifier = ">=4.70.1" },
@@ -2457,7 +2457,7 @@ wheels = [
 
 [[package]]
 name = "sklearn-genetic-opt"
-version = "0.14.0"
+version = "0.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deap" },
@@ -2466,9 +2466,9 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/68/f595e3f5f5c82643a4dfac7f32889e828e95563323d8aa670d70568ab10b/sklearn_genetic_opt-0.14.0.tar.gz", hash = "sha256:cd0ac5648e0b0b0ea883752d8fbd17469459762e48d0db6fd154d879b013ba23", size = 90281, upload-time = "2026-10-10T22:02:25.576Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/e5/2547b8ecb8c31bd08c35075f8325f14b9af3051373232eaad9379ee0713c/sklearn_genetic_opt-0.15.0.tar.gz", hash = "sha256:d4295922fb7c12040a25c072414c85a02a7df085cad891274262acea822123d3", size = 95513, upload-time = "2026-11-18T03:57:13.488Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/2e/083ee59e59790723fd5d1fa189f8c55e5752e1efa07f90bcbf004823d350/sklearn_genetic_opt-0.14.0-py3-none-any.whl", hash = "sha256:9ee52edddd5a5e0915eb3c64a94adb726419d880c64a9d04ff24212cd9ec353f", size = 93154, upload-time = "2026-10-10T22:02:24.091Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/ed/49ced3e85575123579dd75e70b1dc3b1ad89b52e7163c9646515c2144fea/sklearn_genetic_opt-0.15.0-py3-none-any.whl", hash = "sha256:6a46984b55f8d9d60e33612d8bc9250cf318b9de817639bdc83d1c29d84a953b", size = 98766, upload-time = "2026-11-18T03:57:11.949Z" },
 ]
 
 [[package]]
